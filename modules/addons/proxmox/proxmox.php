@@ -26,6 +26,7 @@
  * @license http://www.whmcs.com/license/ WHMCS Eula
  */
 
+
 if (!defined("WHMCS")) {
     die("This file cannot be accessed directly");
 }
