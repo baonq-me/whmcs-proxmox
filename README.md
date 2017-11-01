@@ -3,4 +3,4 @@
 ## Todo
 - [ ] Adding reference documents and git repos
 - [ ] Refactoring code
-- [ ] Complete this todo
+- [ ] Complete this todo and README file.
