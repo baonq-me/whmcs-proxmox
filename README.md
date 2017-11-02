@@ -7,4 +7,4 @@
 
 # Notes
 
-This project use [https://github.com/baonq-me/pyproxmox](prpyproxmox) at <code>modules/addons/proxmox/pyproxmox</code>
+This project use [pyproxmox](https://github.com/baonq-me/pyproxmox) at <code>modules/addons/proxmox/pyproxmox</code>
