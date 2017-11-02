@@ -3,6 +3,7 @@
 # References 
 
 - [whmcs-order-management](https://github.com/dylanhansch/whmcs-order-management)
+- [sample-addon-module](https://github.com/WHMCS/sample-addon-module)
 
 ## Todo
 - [ ] Adding reference documents and git repos
