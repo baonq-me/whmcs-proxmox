@@ -5,7 +5,7 @@
 # Ref: https://github.com/frederickding/Cloud-Init-ISO
 """
 
-Installation: 
+Installation:
 
 sudo pip install requests
 sudo pip install requests==2.6.0
@@ -29,7 +29,7 @@ import time, datetime, json, re
 # Call genisoimage via cli
 import subprocess
 
-# Print colored text 
+# Print colored text
 from lazyme.string import palette, highlighter, formatter
 from lazyme.string import color_print
 
@@ -41,7 +41,7 @@ from lazyme.string import color_print
 from pyfancy import *
 
 CONFIG_FILE = 'proxmox.conf'
-TEMPLATE_VMID = '104'
+TEMPLATE_VMID = '101'
 
 HTTP_STATUS_CODE = {400: 'Bad request', 500: 'Internal Server Error'}
 
@@ -50,7 +50,7 @@ def formatData(bytes, unit, decimals):
 	return round(bytes*1.0 / 1024**units[unit], decimals)
 
 def translateToMB(data):
-	units = {'M': 0, 'G': 1}
+	units = {'M': 0, 'G': 1, 'GB': 1, 'MB': 1}
 	sizes = filter(None, re.split('(\d+)', data))
 	convertToMB = int(sizes[0]) * (1024**units[sizes[1]])
 	return str(convertToMB)
@@ -119,7 +119,7 @@ class ProxmoxCLI():
 
 	def parse_option(self):
 		self.parser = argparse.ArgumentParser(description = 'Proxmox API client')
-		
+
 		# Debugging mode
 		self.parser.add_argument('-debug', '--debug', nargs = '*', help='Enable debugging mode')
 
@@ -155,21 +155,21 @@ class ProxmoxCLI():
 							percent = round(1.0*used/total*100, 2)
 							alert(percent, 'STAT', 75, 90)
 							pyfancy().raw(getClusterStatus['data'][i]['name'] + ' storage ' + getNodeStorage['data'][j]['storage'] + ' ' + str(used) + 'GB ' + str(total) + 'GB ' + str(percent) + '%').output()
-				
+
 					# CPU
 					if len(self.args.detail) == 0 or 'cpu' in self.args.detail:
 						getNodeStatus = self.proxmox.getNodeStatus(getClusterStatus['data'][i]['name'])
 						percent = (float(getNodeStatus['data']['loadavg'][0]) / float(getNodeStatus['data']['cpuinfo']['cpus'])) * 100
 						alert(percent, 'STAT', 75, 90)
 						pyfancy().raw(getClusterStatus['data'][i]['name'] + ' cpu thread ' + str(getNodeStatus['data']['cpuinfo']['cpus']) + ' loadavg ' + str(getNodeStatus['data']['loadavg'][0]) + ' ' + str(getNodeStatus['data']['loadavg'][1]) + ' ' + str(getNodeStatus['data']['loadavg'][2])).output()
-					
+
 					# Memory
 					if len(self.args.detail) == 0 or 'mem' in self.args.detail:
 						# RAM
 						getNodeStatus = self.proxmox.getNodeStatus(getClusterStatus['data'][i]['name'])
 						total = formatData(getNodeStatus['data']['memory']['total'], 'GB', 2)
 						used = formatData(getNodeStatus['data']['memory']['used'], 'GB', 2)
-						percent = round(1.0*used/total*100, 2)						
+						percent = round(1.0*used/total*100, 2)
 						alert(percent, 'STAT', 75, 90)
 						pyfancy().raw(getClusterStatus['data'][i]['name'] + ' mem ram ' + str(used) + 'GB ' + str(total) + 'GB ' + str(round(used/total*100, 2)) + '%').output()
 
@@ -191,7 +191,7 @@ class ProxmoxCLI():
 								netin = netin + instance['netin']
 								netout += instance['netout']
 						pyfancy().green('[STAT]\t').raw(getClusterStatus['data'][i]['name'] + ' net ' + str(formatData(netin, 'GB', 3)) + 'GB ' + str(formatData(netout, 'GB', 3)) + 'GB').output()
-		
+
 		elif self.args.clone is not None:
 			if self.args.debug is not None:
 				pyfancy().yellow('[WARN]\t').raw('Debugging mode is enabled. After cloning, new VM will be deleted.').output()
@@ -220,12 +220,12 @@ class ProxmoxCLI():
 																newid=cloneConfig['newvmid'], \
 																full='1', \
 																name=cloneConfig['hostname'])
-			
+
 			if debug('cloneVirtualMachine()', response, self.args.debug) == 0:
 				pyfancy().green('[INFO]\t').raw('Cloning VM ' + cloneConfig['newvmid'] + ', please wait ... ').output()
 			else:
 				return 1
-			
+
 			# Wait for cloning process complete
 			UPID = response['data']
 			while (True):
@@ -234,14 +234,14 @@ class ProxmoxCLI():
 				if getNodeTaskStatusByUPID['data']['status'] == 'stopped':
 					pyfancy().green('[INFO]\t').raw('VM ' + cloneConfig['newvmid'] + ' is ready. Starting configuration on hardware ...').output()
 					break
-			
+
 			response = self.proxmox.allocDiskImages(cloneConfig['node'], self.config['storage_engine'], \
 							filename = cloneConfig['newdisk'], \
-							size = cloneConfig['storage'], \
+							size = (cloneConfig['storage'])[:-1], \
 							vmid = cloneConfig['newvmid'], \
 							format = self.config['storage_format'] \
 							)
-			
+
 			if debug('allocDiskImages()', response, self.args.debug) == 0:
 				pyfancy().green('[INFO]\t').raw('Disk ').green(cloneConfig['newdisk']).raw(' for VM ' + cloneConfig['newvmid'] + ' is allocated.').output()
 			else:
@@ -250,12 +250,12 @@ class ProxmoxCLI():
 			# upload image
 			cloudinitISO = makeCloudInitISO(cloneConfig['newvmid'])
 			response = self.proxmox.uploadContent(cloneConfig['node'], self.config['cloudinit_storage'], 'cloudinit/iso/' + cloudinitISO, 'iso')
-			
+
 			if debug('uploadContent()', response, self.args.debug) == 0:
 				pyfancy().green('[INFO]\t').raw('cloudinit datasource ').green(cloudinitISO).raw(' for VM ' + cloneConfig['newvmid'] + ' is uploaded.').output()
 			else:
 				return 1
-				
+
 
 			response = self.proxmox.configVirtualmachine(cloneConfig['node'], cloneConfig['newvmid'], \
 						{	'sockets': '2' if int(cloneConfig['cpus']) >= 2 else '1', \
@@ -305,4 +305,3 @@ if __name__ == '__main__':
 
 	proxmoxcli = ProxmoxCLI()
 	proxmoxcli.parse_option()
-

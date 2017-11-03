@@ -4,30 +4,32 @@ namespace WHMCS\Module\Addon\Proxmox\PHPProxmox;
 
 class PHPProxmox
 {
-  private $home = __DIR__."/../../pyproxmox/";
+  private $home = "../modules/addons/proxmox/pyproxmox/";
   private $vars;
 
   public function __construct($vars) {
-    $this->vars = $vars;      // absolute path to home folder
-    logActivity('PHPProxmox: '.json_encode($vars));
-    return true;
+    $this->vars = $vars;
+
+    if ($vars['PyProxmox Module'] != 'auto')
+      $this->home = $vars['PyProxmox Module'];
   }
 
-  public function buildConfig($vars)
+  public function buildConfig()
   {
     $config = <<<EOF
 {
-   "host": "{$vars['PVE Hostname']}",
-   "user": "{$vars['PVE User']}",
-   "password": "{$vars['PVE Password']}",
-   "storage_bus": "{$vars['Default Storage Bus']}",
-   "storage_engine": "{$vars['Default Storage Engine']}",
-   "storage_format": "{$vars['Default Storage Format']}",
-   "cloudinit_storage": "{$vars['CloudInit Storage']}"
+   "host": "{$this->vars['PVE Hostname']}",
+   "user": "{$this->vars['PVE User']}",
+   "password": "{$this->vars['PVE Password']}",
+   "storage_bus": "{$this->vars['Default Storage Bus']}",
+   "storage_engine": "{$this->vars['Default Storage Engine']}",
+   "storage_format": "{$this->vars['Default Storage Format']}",
+   "cloudinit_storage": "{$this->vars['CloudInit Storage']}"
 }
 EOF;
 
-    return file_put_contents($this->home."proxmox.conf", $config) !== FALSE;
+    file_put_contents($this->home."proxmox.conf", $config) === TRUE;
+    logActivity("PHPProxmox/Config: ".file_get_contents($this->home."proxmox.conf"));
   }
 
   public function getSystemStatus()
@@ -56,7 +58,6 @@ EOF;
   {
     return $this->vars[$config];
   }
-
 
 }
 

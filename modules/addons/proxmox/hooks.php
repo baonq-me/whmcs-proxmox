@@ -28,6 +28,9 @@
  *
  * add_hook(string $hookPointName, int $priority, string|array|Closure $function)
  */
+
+use Illuminate\Database\Capsule\Manager as Capsule;
+
 add_hook('ClientEdit', 1, function(array $params) {
     try {
         // Call the service's function, using the values provided by WHMCS in
@@ -40,6 +43,7 @@ add_hook('ClientEdit', 1, function(array $params) {
 // Ref: https://github.com/dylanhansch/whmcs-order-management
 add_hook('InvoicePaid', 1, function($vars) {
     $paidInvoiceID = $vars['invoiceid'];
+    logActivity("[Addon] Proxmox: Invoice #$paidInvoiceID is paid");
 
     /*
      * Accept paid orders
@@ -72,17 +76,35 @@ add_hook('InvoicePaid', 1, function($vars) {
                     logActivity("An error occured accepting order $invoiceID: " . $acceptOrderResults['result']);
                 } else
                 {
-                  //$results = localAPI('GetInvoice', array('invoiceid' => $invoiceID), 'admin');
-                  //file_put_contents("abc.txt", "");
-                  //file_put_contents("abc.txt", "GetInvoice ".json_encode($results)."\n\n", FILE_APPEND);
-                  //file_put_contents("abc.txt", "InvoiceID ".$invoiceID, FILE_APPEND);
+                  $command = 'GetInvoice';
+                  $values = array(
+                      'invoiceid' => $paidInvoiceID,
+                  );
+                  $paidInvoice = localAPI($command, $values);
+                  foreach ($paidInvoice['items']['item'] as $invoice)
+                  {
+                      logActivity("[Addon] Proxmox: Invoice ID#$paidInvoiceID -> Item #{$invoice['id']} (relid = {$invoice['relid']}) -> Description: {$invoice['description']}");
+                      $vmConfigItems = Capsule::table('tblcustomfieldsvalues')->join('tblcustomfields', 'tblcustomfieldsvalues.fieldid', '=', 'tblcustomfields.id')->where('tblcustomfieldsvalues.relid', '=', $invoice['relid'])->select('fieldname', 'value')->get();
+                      logActivity("[Addon] Proxmox: ".json_encode($vmConfigItems));
+
+                      $pyProxmoxConfig = [];
+                      foreach ($vmConfigItems as $config)
+                      {
+                          logActivity("[Addon] Proxmox: Invoice ID#$paidInvoiceID -> Item #{$invoice['id']} (relid = {$invoice['relid']}) -> {$config->fieldname} => {$config->value}");
+                          $pyProxmoxConfig[$config->fieldname] = $config->value;
+                      }
+                      $cmd = "cd ../modules/addons/proxmox/pyproxmox; ./proxmox.py -c --node pve --cpu {$pyProxmoxConfig['CPU']} --mem {$pyProxmoxConfig['Memory']} --storage {$pyProxmoxConfig['Hard disk']} --hostname {$pyProxmoxConfig['Hostname']} > pyproxmox.log";
+                      logActivity("[Addon] Proxmox: $cmd");
+                      exec($cmd);
+                      logActivity(file_get_contents("../modules/addons/proxmox/pyproxmox/pyproxmox.log"));
+
+                  }
                 }
             }
         }
-
-
-
+        return true;
     } else {
         logActivity("An error occured with getting orders: " . $results['result']);
+        return false;
     }
 });

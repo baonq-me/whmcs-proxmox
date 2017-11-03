@@ -1,0 +1,17 @@
+[32m[INFO]	[0mConnected to pve.baonq.me as root@pam[0m
+[32m[CONF]	[0mTemplate VMID:       101[0m
+[32m[CONF]	[0mNode:                pve[0m
+[32m[CONF]	[0mHostname:            whmcs-proxmox-test[0m
+[32m[CONF]	[0mNew VMID:            106[0m
+[32m[CONF]	[0mCPU:                 1[0m
+[32m[CONF]	[0mRAM:                 1GB[0m
+[32m[CONF]	[0mAdditional Storage:  20GB (vm-106-disk-2)[0m
+[32m[CONF]	[0mStorage engine:      local-zfs[0m
+[32m[CONF]	[0mStorage bus:         virtio[0m
+[32m[CONF]	[0mStorage format:      raw[0m
+[32m[INFO]	[0mCloning VM 106, please wait ... [0m
+[32m[INFO]	[0mVM 106 is ready. Starting configuration on hardware ...[0m
+[32m[INFO]	[0mDisk [32mvm-106-disk-2[0m for VM 106 is allocated.[0m
+[32m[INFO]	[0mcloudinit datasource [32mVM106-03_11_2017_19_19_46.iso[0m for VM 106 is uploaded.[0m
+[32m[INFO]	[0mVM 106 is successfully configured and will start shortly ...[0m
+[32m[INFO]	[0mVM 106 is successfully started.[0m

@@ -28,14 +28,14 @@ class Controller {
         // Get module configuration parameters
         $configPVEHostname = $vars['PVE Hostname'];
         $configPVEUser = $vars['PVE User'];
-        //$configPVEPassword = $vars['PVE Password'];
+        $configPVEPassword = $vars['PVE Password'];
         $configStorageBus = $vars['Default Storage Bus'];
         $configStorageEngine = $vars['Default Storage Engine'];
         $configStorageFormat = $vars['Default Storage Format'];
         $configCloudInitStorage = $vars['CloudInit Storage'];
 
-        $proxmox = new PHPProxmox("../modules/addons/proxmox/pyproxmox");
-        $proxmox->buildConfig($vars);
+        $proxmox = new PHPProxmox($vars);
+        $proxmox->buildConfig();
         $status = implode("<br/>", $proxmox->getSystemStatus());
 
         return <<<EOF
@@ -46,13 +46,13 @@ class Controller {
 <p>Proxmox VE Configurations:</p>
 
 <blockquote>
-    PVE Hostname:&#09;{$configPVEHostname}<br>
-    PVE User:&#09;{$configPVEUser}<br>
-    PVE Password:&#09; <code>Éo cho xem :v</code><br>
-    Default Storage Bus:&#09; {$configStorageBus}<br>
-    Default Storage Engine:&#09; {$configStorageEngine}<br>
-    Default Storage Format:&#09; {$configStorageFormat}<br>
-    CloudInit Storage:&#09; {$configCloudInitStorage}
+    PVE Hostname: {$configPVEHostname}<br>
+    PVE User: {$configPVEUser}<br>
+    PVE Password: <code>ít ít ít</code><br>
+    Default Storage Bus: {$configStorageBus}<br>
+    Default Storage Engine: {$configStorageEngine}<br>
+    Default Storage Format: {$configStorageFormat}<br>
+    CloudInit Storage: {$configCloudInitStorage}
 </blockquote>
 
 <p>
