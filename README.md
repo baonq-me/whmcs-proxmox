@@ -8,9 +8,12 @@
 - [WHMCS Database tips and tricks – The basics](https://www.whmcs.guru/development/whmcs-database-tips-tricks-basics/)
 - [WHMCS Database tips and tricks – The queries](https://www.whmcs.guru/development/whmcs-database-tips-tricks-queries/)
 - [WHMCS Database tips and tricks – further queries](https://www.whmcs.guru/development/whmcs-database-tips-tricks-queries-2/)
+- [WHMCS Database tips and tricks – The schema](https://www.whmcs.guru/development/whmcs-database-tips-tricks-schema/)
 - [WHMCS Developer Documentation](https://developers.whmcs.com/)
-- []()
-- []()
+- [Database - Schema Builder](https://laravel.com/docs/4.2/schema)
+- [Database - Queries Builder](https://laravel.com/docs/4.2/queries)
+- [WHMCS Service Information Display](https://www.whmcs.guru/whmcs-modifications/whmcs-v6-service-information-display/)
+- [Adding an item for logged in users with WHMCS](https://www.whmcs.guru/whmcs-modifications/adding-item-logged-users-whmcs/)
 - []()
 - []()
 
@@ -35,7 +38,7 @@
 - []()
 
 ## Todo
-- [ ] Adding reference documents and git repos
+- [x] Adding reference documents and git repos
 - [ ] Refactoring code
 - [ ] Complete this todo and README file.
 
