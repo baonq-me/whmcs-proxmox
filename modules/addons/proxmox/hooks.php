@@ -93,10 +93,10 @@ add_hook('InvoicePaid', 1, function($vars) {
                           logActivity("[Addon] Proxmox: Invoice ID#$paidInvoiceID -> Item #{$invoice['id']} (relid = {$invoice['relid']}) -> {$config->fieldname} => {$config->value}");
                           $pyProxmoxConfig[$config->fieldname] = $config->value;
                       }
-                      $cmd = "cd ../modules/addons/proxmox/pyproxmox; ./proxmox.py -c --node pve --cpu {$pyProxmoxConfig['CPU']} --mem {$pyProxmoxConfig['Memory']} --storage {$pyProxmoxConfig['Hard disk']} --hostname {$pyProxmoxConfig['Hostname']} > pyproxmox.log";
+                      $cmd = "cd ../modules/addons/proxmox/pyproxmox; ./proxmox.py -c --node pve --cpu {$pyProxmoxConfig['CPU']} --mem {$pyProxmoxConfig['Memory']} --storage {$pyProxmoxConfig['Hard disk']} --hostname {$pyProxmoxConfig['Hostname']} --debug > pyproxmox.log";
                       logActivity("[Addon] Proxmox: $cmd");
                       exec($cmd);
-                      logActivity(file_get_contents("../modules/addons/proxmox/pyproxmox/pyproxmox.log"));
+                      logActivity(file_get_contents("/var/www/html/whmcs/modules/addons/proxmox/pyproxmox/pyproxmox.log"));
 
                   }
                 }
@@ -108,3 +108,42 @@ add_hook('InvoicePaid', 1, function($vars) {
         return false;
     }
 });
+
+
+add_hook('AfterCronJob', 1, function($vars) {
+    $date = exec("date");
+
+    file_put_contents(__DIR__."/date.txt", $date);
+});
+
+add_hook('AdminHomeWidgets', 1, function() {
+    return new HelloWorldWidget();
+});
+
+/**
+ * Hello World Widget.
+ */
+class HelloWorldWidget extends \WHMCS\Module\AbstractWidget
+{
+    protected $title = 'Hello World';
+    protected $description = '';
+    protected $weight = 150;
+    protected $columns = 1;
+    protected $cache = false;
+    protected $cacheExpiry = 120;
+    protected $requiredPermission = '';
+
+    public function getData()
+    {
+        return array();
+    }
+
+    public function generateOutput($data)
+    {
+        return <<<EOF
+<div class="widget-content-padded">
+    Hello World!
+</div>
+EOF;
+    }
+}
