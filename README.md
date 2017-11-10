@@ -5,6 +5,12 @@
 - [Order Management Addon](https://github.com/dylanhansch/whmcs-order-management)
 - [Sample Addon Module](https://github.com/WHMCS/sample-addon-module)
 - [SpamExperts Addons](https://github.com/SpamExperts/whmcs-addon)
+- [WHMCS Database tips and tricks – The basics](https://www.whmcs.guru/development/whmcs-database-tips-tricks-basics/)
+- [WHMCS Database tips and tricks – The queries](https://www.whmcs.guru/development/whmcs-database-tips-tricks-queries/)
+- [WHMCS Database tips and tricks – further queries](https://www.whmcs.guru/development/whmcs-database-tips-tricks-queries-2/)
+- [WHMCS Developer Documentation](https://developers.whmcs.com/)
+- []()
+- []()
 - []()
 - []()
 
