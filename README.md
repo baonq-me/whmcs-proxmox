@@ -29,11 +29,17 @@
 - [Debug variables in Smarty](https://stackoverflow.com/questions/2431763/how-to-debug-variables-in-smarty-like-in-php-var-dump)
 - [SmartyBC](https://www.smarty.net/docs/en/bc.tpl)
 - [PHP tags](https://www.smarty.net/docsv2/en/language.function.php.tpl)
+- [Feature Requests - Expose Smarty Object](https://requests.whmcs.com/topic/expose-smarty-object)
 - []()
 - []()
 
 ### Frontend - HTML / CSS / Javascript
 - [Progress bar](https://www.w3schools.com/howto/howto_js_progressbar.asp)
+- []()
+- []()
+
+### Proxmox Intergration
+- [Proxmox VPS For WHMCS](https://www.docs.modulesgarden.com/Proxmox_VPS_For_WHMCS)
 - []()
 - []()
 
