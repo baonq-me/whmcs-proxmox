@@ -23,15 +23,15 @@
 - []()
 - []()
 
-## Frontend - HTML / CSS / Javascript
+### Frontend - HTML / CSS / Javascript
 - [Progress bar](https://www.w3schools.com/howto/howto_js_progressbar.asp)
 - []()
 - []()
 
-# Todo
+## Todo
 - [ ] Adding reference documents and git repos
 - [ ] Refactoring code
 - [ ] Complete this todo and README file.
 
-# Notes
+## Notes
 This project use [pyproxmox](https://github.com/baonq-me/pyproxmox) at <code>modules/addons/proxmox/pyproxmox</code>
