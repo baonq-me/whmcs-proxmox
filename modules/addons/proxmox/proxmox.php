@@ -253,6 +253,9 @@ function proxmox_upgrade($vars)
  */
 function proxmox_output($vars)
 {
+    $vars['smarty'] = new Smarty();
+    $vars['smartybc'] = new SmartyBC();
+
     // Get common module parameters
     $modulelink = $vars['modulelink']; // eg. addonmodules.php?module=addonmodule
     $version = $vars['version']; // eg. 1.0
@@ -272,8 +275,7 @@ function proxmox_output($vars)
     $action = isset($_REQUEST['action']) ? $_REQUEST['action'] : '';
 
     $dispatcher = new AdminDispatcher();
-    $response = $dispatcher->dispatch($action, $vars);
-    echo $response.'A here';
+    $dispatcher->dispatch($action, $vars);
 }
 
 /**

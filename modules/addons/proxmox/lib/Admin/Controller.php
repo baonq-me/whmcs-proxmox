@@ -4,6 +4,9 @@ namespace WHMCS\Module\Addon\Proxmox\Admin;
 
 use WHMCS\Module\Addon\Proxmox\PHPProxmox\PHPProxmox;
 
+
+//require_once("../vendor/smarty/smarty/libs/SmartyBC.class.php");
+
 //require_once("../modules/addons/proxmox/functions.php");
 
 /**
@@ -20,53 +23,28 @@ class Controller {
      */
     public function index($vars)
     {
-        // Get common module parameters
-        $modulelink = $vars['modulelink']; // eg. addonmodules.php?module=addonmodule
-        $version = $vars['version']; // eg. 1.0
-        $LANG = $vars['_lang']; // an array of the currently loaded language variables
+        $smarty = $vars['smarty'];
 
-        // Get module configuration parameters
-        $configPVEHostname = $vars['PVE Hostname'];
-        $configPVEUser = $vars['PVE User'];
-        $configPVEPassword = $vars['PVE Password'];
-        $configStorageBus = $vars['Default Storage Bus'];
-        $configStorageEngine = $vars['Default Storage Engine'];
-        $configStorageFormat = $vars['Default Storage Format'];
-        $configCloudInitStorage = $vars['CloudInit Storage'];
+        //$version = $vars['version']; // eg. 1.0
+        //$LANG = $vars['_lang']; // an array of the currently loaded language variables
 
         $proxmox = new PHPProxmox($vars);
         $proxmox->buildConfig();
         $status = implode("<br/>", $proxmox->getSystemStatus());
 
-        return <<<EOF
+        $smarty->assign('status', $status);
+        $smarty->assign('modulelink', $vars['modulelink']);
+        $smarty->assign('configPVEHostname', $vars['PVE Hostname']);
+        $smarty->assign('configPVEUser', $vars['PVE User']);
+        //$smarty->assign('configPVEPassword', $vars['PVE Password']);
+        $smarty->assign('configStorageBus', $vars['Default Storage Bus']);
+        $smarty->assign('configStorageEngine', $vars['Default Storage Engine']);
+        $smarty->assign('configStorageFormat', $vars['Default Storage Format']);
+        $smarty->assign('configCloudInitStorage', $vars['CloudInit Storage']);
 
-<h2>System Infomation</h2>
-<code>{$status}</code>
-<br/><br/>
-<p>Proxmox VE Configurations:</p>
+        $smarty->display(dirname(__FILE__) . '/../../templates/admin/index.tpl');
 
-<blockquote>
-    PVE Hostname: {$configPVEHostname}<br>
-    PVE User: {$configPVEUser}<br>
-    PVE Password: <code>ít ít ít</code><br>
-    Default Storage Bus: {$configStorageBus}<br>
-    Default Storage Engine: {$configStorageEngine}<br>
-    Default Storage Format: {$configStorageFormat}<br>
-    CloudInit Storage: {$configCloudInitStorage}
-</blockquote>
-
-<p>
-    <a href="{$modulelink}&action=show" class="btn btn-success">
-        <i class="fa fa-check"></i>
-        Visit valid action link
-    </a>
-    <a href="{$modulelink}&action=invalid" class="btn btn-default">
-        <i class="fa fa-times"></i>
-        Visit invalid action link
-    </a>
-</p>
-
-EOF;
+        return '';
     }
 
     /**
@@ -91,7 +69,7 @@ EOF;
         $configRadioField = $vars['Radio Field Name'];
         $configTextareaField = $vars['Textarea Field Name'];
 
-        return <<<EOF
+        echo <<<EOF
 
 <h2>Show</h2>
 
