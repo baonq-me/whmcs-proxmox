@@ -134,8 +134,8 @@ class pyproxmox:
             #print("Error in trying to process JSON")
             #print(self.response)
             if self.response.status_code==401 and (not sys._getframe(1).f_code.co_name == sys._getframe(0).f_code.co_name):
-                print "Unexpected error: %s : %s" % (str(sys.exc_info()[0]), str(sys.exc_info()[1]))
-                print "try to recover connection auth"
+                print("Unexpected error: %s : %s" % (str(sys.exc_info()[0]), str(sys.exc_info()[1])))
+                print("try to recover connection auth")
                 self.auth_class.setup_connection()
                 self.get_auth_data()
                 return self.connect(conn_type, option, post_data)
@@ -715,5 +715,3 @@ class pyproxmox:
         """Update storage configuration"""
         data = self.connect('put',"storage/%s" % (storageid), post_data)
         return data
-
-        

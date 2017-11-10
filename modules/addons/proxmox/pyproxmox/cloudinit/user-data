@@ -1,10 +1,109 @@
 #cloud-config
+# List of cloudinit modules: http://cloudinit.readthedocs.io/en/latest/topics/modules.html
 
-# remove this block entirely if not using password authentication
-password: Asdfqwerty
+##################################
+# SSH & Passwords
+##################################
 ssh_pwauth: True
-chpasswd: { expire: False }
-
-# replace with your own public key (e.g. ~/.ssh/id_rsa.pub)
+disable_root_opts:
+chpasswd:
+  list: |
+    root:vietnix@2017
+    expire: False
 ssh_authorized_keys:
-  - ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDIq9uNlEi5R9Riqk8fpg5bs/24gYNlohR8zqd7fBONa65IXYs+Zignc+NGlX5JtVANhDQmULd36lY90SHpsSVqzEfTEBaAZE92ypfERIlyvoNQA5FajuxSLGxagwhnTxVzZ7FQ+faVFNmpSU3kGMYefPsnC8ykXexzBmKmviu8olPMvY0uUJRDvJ7OyVLk88M1J6LtACw66WLUEwx5v61d+/oiYb1L7ILZNExWXyLZUeMnP/Ke+77Rvd3F3AzgFByk5kFPVqeYo2CN+CU+Rc7SarlP33dkEOWhnvHGdn0i6k2ZtpwrmnM9M0EQFTAitHgvcEjWNiiecJXKi8vBRpFZ example@example.com
+  - ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAACAQCe34boIawTdJs5D8A0XeSLPv1t0sCt7nTbD9wxfeASwyqh75bfhKDlm8WQ7czdxugX07PnzUYH1iyf0Sz1PlFxtP9n43dICjC6uQexloNQ16yiUN54N1+fgFYUJ85P2V3AloI1H3SW27UVW4SrPQqfO9fbFlJ2S6SBPZzME+NiOLrfAao9ZWDjnXZiyz46Da/VjtOhrJEKYR5ASkRvuPY+TrsVkb5e4RnTEztAeIBLA7AbDYb9AlPXnggBeNpefg/qMDLcJBosI15g69ST+pPWVBuGMSws06IlLJIUMzV3PLs9w03RvobBVQHm+42Lup0JvuEtpK5j232eiYw2cP3RpsyUdIBcClSGuMQmoiXxfU0zuhLEoUE0kjBjq+nn1x3juTHwZ1imz+vuCuqlgTSZ5QYOX2uw7uZBB3E+cB9MhsOS4bMD/FH4SSIPuRwG6ka1RnQOTHYVVtR99Sv7djxykD0KknZlvE9yiFQC/PbGrrt8Z9Sw3iTOv6m0NjZcPU5k60lSLLywelSwuB8NwZaIdL/d3r0/YWXvY9vfk3Vjz1mo0yVB20HXvpRP4GvuwkrZlplW3kP+MpT2ori7FZ5c7kRBeOc+AKcg2ujXisi7nWjIhLBYuKaiP/lVzMAdTy4Lr/e/0lCMiRyWTeMoSBfu6yaz2QU20g03JLyqkvxAow== quocbao@monster
+
+##################################
+# DNS configuration
+##################################
+manage_resolv_conf: true
+resolv_conf:
+    nameservers: ['8.8.4.4', '8.8.8.8']
+
+##################################
+# APT configuration
+##################################
+apt:
+    preserve_sources_list: false
+    sources_list: |
+        deb http://archive.repo.baonq.me/ubuntu/ xenial main restricted
+        deb http://archive.repo.baonq.me/ubuntu/ xenial-updates main restricted
+        deb http://archive.repo.baonq.me/ubuntu/ xenial universe
+        deb http://archive.repo.baonq.me/ubuntu/ xenial-updates universe
+        deb http://archive.repo.baonq.me/ubuntu/ xenial multiverse
+        deb http://archive.repo.baonq.me/ubuntu/ xenial-updates multiverse
+        deb http://archive.repo.baonq.me/ubuntu/ xenial-backports main restricted universe multiverse
+        deb http://archive.repo.baonq.me/ubuntu xenial-security main restricted
+        deb http://archive.repo.baonq.me/ubuntu xenial-security universe
+        deb http://archive.repo.baonq.me/ubuntu xenial-security multiverse
+
+##################################
+# Landscape configuration (only support Ubuntu)
+##################################
+landscape:
+    client:
+        log_level: "info"
+        url: "https://landscape.canonical.com/message-system"
+        ping_url: "http://landscape.canoncial.com/ping"
+        data_path: "/var/lib/landscape/client"
+
+##################################
+# Set system locale
+##################################
+locale: LC_ALL=C
+
+##################################
+# Enable and configure NTP service
+##################################
+ntp:
+  servers:
+    - 0.asia.pool.ntp.org
+    - 3.asia.pool.ntp.org
+timezone: Asia/Ho_Chi_Minh
+
+##################################
+# Package Update Upgrade Install
+##################################
+package_update: true
+packages:
+    - nginx
+
+##################################
+# Hostname
+##################################
+manage_etc_hosts: true
+fqdn: cloudhost.baonq.me
+preserve_hostname: false
+hostname: cloudhost
+
+runcmd:
+- vgextend template-vg /dev/vdb
+- lvextend -l +100%FREE /dev/mapper/template--vg-root
+- resize2fs /dev/mapper/template--vg-root
+- echo "192.168.0.30 repo.archive.baonq.me" >> /etc/hosts
+
+
+# Change network configuration by writing file
+#write_files:
+#-   encoding: b64
+#    content: CiMgVGhpcyBmaWxlIGNvbnRyb2xzIHRoZSBzdGF0ZSBvZiBTRUxpbnV4...
+#    owner: root:root
+#    path: /etc/sysconfig/selinux
+#    permissions: '0644'
+#-   content: |
+#        # My new /etc/sysconfig/samba file
+#
+#        SMBDOPTIONS="-D"
+#    path: /etc/sysconfig/samba
+#-   content: !!binary |
+#        f0VMRgIBAQAAAAAAAAAAAAIAPgABAAAAwARAAAAAAABAAAAAAAAAAJAVAAAAAAAAAAAAAEAAOAAI
+#        AEAAHgAdAAYAAAAFAAAAQAAAAAAAAABAAEAAAAAAAEAAQAAAAAAAwAEAAAAAAADAAQAAAAAAAAgA
+#        AAAAAAAAAwAAAAQAAAAAAgAAAAAAAAACQAAAAAAAAAJAAAAAAAAcAAAAAAAAABwAAAAAAAAAAQAA
+#        ....
+#    path: /bin/arch
+#    permissions: '0555'
+#-   encoding: gzip
+#    content: !!binary |
+#        H4sIAIDb/U8C/1NW1E/KzNMvzuBKTc7IV8hIzcnJVyjPL8pJ4QIA6N+MVxsAAAA=
+#    path: /usr/bin/hello
+#    permissions: '0755'
