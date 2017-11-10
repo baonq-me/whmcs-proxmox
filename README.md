@@ -14,6 +14,7 @@
 - [Database - Queries Builder](https://laravel.com/docs/4.2/queries)
 - [WHMCS Service Information Display](https://www.whmcs.guru/whmcs-modifications/whmcs-v6-service-information-display/)
 - [Adding an item for logged in users with WHMCS](https://www.whmcs.guru/whmcs-modifications/adding-item-logged-users-whmcs/)
+- [Admin Dashboard Widgets](https://developers.whmcs.com/addon-modules/admin-dashboard-widgets/)
 - []()
 - []()
 
