@@ -15,6 +15,7 @@
 - [WHMCS Service Information Display](https://www.whmcs.guru/whmcs-modifications/whmcs-v6-service-information-display/)
 - [Adding an item for logged in users with WHMCS](https://www.whmcs.guru/whmcs-modifications/adding-item-logged-users-whmcs/)
 - [Admin Dashboard Widgets](https://developers.whmcs.com/addon-modules/admin-dashboard-widgets/)
+- [WHMCS - Interacting with the Database](https://developers.whmcs.com/advanced/db-interaction/)
 - []()
 - []()
 
@@ -23,6 +24,16 @@
 - [XTemplate](https://mynukeviet.net/lap-trinh-php/xtemplate-tach-ma-php-va-html-trong-lap-trinh-php-147.html)
 - [Array Beautifier](http://phillihp.com/toolz/php-array-beautifier/)
 - [Creating Triggers from Migration](https://laracasts.com/discuss/channels/general-discussion/creating-triggers-from-migration)
+- [Laravel API - Database - Connection](https://laravel.com/api/5.3/Illuminate/Database/Connection.html)
+- [PHP - PDO](http://php.net/PDO)
+- []()
+- []()
+- []()
+
+### MySQL
+- [MySQL Triggers](https://www.w3resource.com/mysql/mysql-triggers.php)
+- []()
+- []()
 - []()
 
 ### Smarty
@@ -33,14 +44,19 @@
 - [Feature Requests - Expose Smarty Object](https://requests.whmcs.com/topic/expose-smarty-object)
 - []()
 - []()
+- []()
 
 ### Frontend - HTML / CSS / Javascript
 - [Progress bar](https://www.w3schools.com/howto/howto_js_progressbar.asp)
+- [Orion Icon Library](https://orioniconlibrary.com/app)
+- [Pixeden - Icons Set](https://www.pixeden.com/icons-set)
+- []()
 - []()
 - []()
 
 ### Proxmox Intergration
 - [Proxmox VPS For WHMCS](https://www.docs.modulesgarden.com/Proxmox_VPS_For_WHMCS)
+- []()
 - []()
 - []()
 
