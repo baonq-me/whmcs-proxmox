@@ -26,6 +26,9 @@
  * @license http://www.whmcs.com/license/ WHMCS Eula
  */
 
+//use Illuminate\Database\Capsule\Manager as Capsule;
+
+use WHMCS\Database\Capsule;
 
 if (!defined("WHMCS")) {
     die("This file cannot be accessed directly");
@@ -175,18 +178,52 @@ function proxmox_config()
  *
  * @return array Optional success/failure message
  */
+
 function proxmox_activate()
 {
     // Create custom tables and schema required by your module
     $query = "CREATE TABLE `mod_proxmox` (`id` INT( 1 ) NOT NULL AUTO_INCREMENT PRIMARY KEY ,`demo` TEXT NOT NULL )";
     full_query($query);
 
-    return array(
-        'status' => 'success', // Supported values here include: success, error or info
-        'description' => 'This is a demo module only. In a real module you might report an error/failure or instruct a user how to get started with it here.',
+    Capsule::schema()->dropIfExists('mod_proxmox');
+
+    Capsule::schema()->create(
+      'mod_proxmox',
+      function ($table) {
+        $table->integer('id')->unique();
+        $table->integer('invoiceid');
+        $table->integer('userid');
+        $table->string('type');
+        $table->integer('relid');
+        $table->text('info');                           // VM configuration, json format
+        $table->timestamp('paid_at');                   // Time when this VM is paid
+        $table->date('created_at');                     // Time until auto create
+        $table->string('paymentmethod')->nullable();
+        $table->string('status');
+        $table->string('notes')->nullable();
+        $table->boolean('hide')->default('0');
+        $table->boolean('autocreate')->default('1');
+
+        $table->primary('id');
+      }
     );
 
-    # Generate file proxmox.conf
+    $trigger = "
+CREATE TRIGGER `update_invoiceitems` AFTER UPDATE ON `tblinvoices`
+FOR EACH ROW
+BEGIN
+IF NEW.`status` = 'Paid' THEN
+UPDATE `tblinvoiceitems` SET `notes` = 'Paid' WHERE `tblinvoiceitems`.`invoiceid` = NEW.`id`;
+END IF;
+END;
+";
+
+    Capsule::connection()->getPdo()->exec($trigger);
+
+    return array(
+        'status' => 'success', // Supported values here include: success, error or info
+        'description' => 'Addon is activated successfully.',
+    );
 }
 
 /**
@@ -203,12 +240,12 @@ function proxmox_activate()
 function proxmox_deactivate()
 {
     // Undo any database and schema modifications made by your module here
-    $query = "DROP TABLE `mod_proxmox`";
-    full_query($query);
+    Capsule::schema()->dropIfExists('mod_proxmox');
+    Capsule::connection()->getPdo()->exec('DROP TRIGGER IF EXISTS `update_invoiceitems`');
 
     return array(
         'status' => 'success', // Supported values here include: success, error or info
-        'description' => 'This is a demo module only. In a real module you might report an error/failure here.',
+        'description' => 'Addon is disabled. All database is wiped out.',
     );
 }
 
