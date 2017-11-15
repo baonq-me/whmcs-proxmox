@@ -22,7 +22,7 @@
 - [var_dump()](https://www.w3resource.com/php/function-reference/var_dump.php)
 - [XTemplate](https://mynukeviet.net/lap-trinh-php/xtemplate-tach-ma-php-va-html-trong-lap-trinh-php-147.html)
 - [Array Beautifier](http://phillihp.com/toolz/php-array-beautifier/)
-- []()
+- [Creating Triggers from Migration](https://laracasts.com/discuss/channels/general-discussion/creating-triggers-from-migration)
 - []()
 
 ### Smarty
