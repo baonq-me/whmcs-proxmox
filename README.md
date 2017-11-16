@@ -7,14 +7,18 @@
 # Development status
 - Under development.
 
-## First release
-![alt text](https://img1.niftyimages.com/4s5/o50/m3m)
+## Timeline
+First release at November 30, 05:00 PM
 
-## Beta release
-![alt text](https://img1.niftyimages.com/4s5/d50/k3m)
+![First release at November 30, 05:00 PM](https://img1.niftyimages.com/4s5/o50/m3m)
 
-## Official release 
-![alt text](https://img1.niftyimages.com/4s5/r50/j3m)
+Beta release at December 15, 05:00 PM
+
+![Beta release at December 15, 05:00 PM](https://img1.niftyimages.com/4s5/d50/k3m)
+
+Official release at December 29, 05:00 PM
+
+![Official release at December 29, 05:00 PM](https://img1.niftyimages.com/4s5/r50/j3m)
 
 ## References 
 ### WHMCS 
