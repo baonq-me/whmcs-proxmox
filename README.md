@@ -1,5 +1,21 @@
 # whmcs-proxmox
 
+# Core functions
+- Allow monitoring proxmox cluster from WHMCS admin page
+- Automatically create VM in proxmox cluster when an order is paid in WHMCS.
+
+# Development status
+- Under development.
+
+## First release
+![alt text](https://img1.niftyimages.com/4s5/o50/m3m)
+
+## Beta release
+![alt text](https://img1.niftyimages.com/4s5/d50/k3m)
+
+## Official release 
+![alt text](https://img1.niftyimages.com/4s5/r50/j3m)
+
 ## References 
 ### WHMCS 
 - [Order Management Addon](https://github.com/dylanhansch/whmcs-order-management)
@@ -62,8 +78,10 @@
 
 ## Todo
 - [x] Adding reference documents and git repos
-- [ ] Refactoring code
+- [x] Refactoring code
 - [ ] Complete this todo and README file.
+- 
+
 
 ## Notes
 This project use [pyproxmox](https://github.com/baonq-me/pyproxmox) at <code>modules/addons/proxmox/pyproxmox</code>
