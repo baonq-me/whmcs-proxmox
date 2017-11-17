@@ -46,6 +46,8 @@ Official release at December 29, 05:00 PM
 - [Creating Triggers from Migration](https://laracasts.com/discuss/channels/general-discussion/creating-triggers-from-migration)
 - [Laravel API - Database - Connection](https://laravel.com/api/5.3/Illuminate/Database/Connection.html)
 - [PHP - PDO](http://php.net/PDO)
+- [PHP - PDO::query](http://php.net/manual/en/pdo.query.php)
+- [PHP - PDO::exec](http://php.net/manual/en/pdo.exec.php)
 - []()
 - []()
 - []()
