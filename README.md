@@ -87,7 +87,7 @@ Official release at December 29, 05:00 PM
 ## Todo
 - [x] Adding reference documents and git repos
 - [x] Refactoring code
-- [ ] Complete this todo and README file.
+- [x] Complete this todo and README file.
 
 ## Notes
 This project use [pyproxmox](https://github.com/baonq-me/pyproxmox) at <code>modules/addons/proxmox/pyproxmox</code>
