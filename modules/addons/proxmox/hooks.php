@@ -29,7 +29,8 @@
  * add_hook(string $hookPointName, int $priority, string|array|Closure $function)
  */
 
-use Illuminate\Database\Capsule\Manager as Capsule;
+//use Illuminate\Database\Capsule\Manager as Capsule;
+use WHMCS\Database\Capsule;
 
 add_hook('ClientEdit', 1, function(array $params) {
     try {
@@ -95,7 +96,7 @@ add_hook('InvoicePaid', 1, function($vars) {
                       }
                       $cmd = "cd ../modules/addons/proxmox/pyproxmox; ./proxmox.py -c --node pve --cpu {$pyProxmoxConfig['CPU']} --mem {$pyProxmoxConfig['Memory']} --storage {$pyProxmoxConfig['Hard disk']} --hostname {$pyProxmoxConfig['Hostname']} --debug > pyproxmox.log";
                       logActivity("[Addon] Proxmox: $cmd");
-                      exec($cmd);
+                      //exec($cmd);
                       logActivity(file_get_contents("/var/www/html/whmcs/modules/addons/proxmox/pyproxmox/pyproxmox.log"));
 
                   }
@@ -111,18 +112,44 @@ add_hook('InvoicePaid', 1, function($vars) {
 
 
 add_hook('AfterCronJob', 1, function($vars) {
-    $date = exec("date");
+    // $date = exec("date");
+    // file_put_contents(__DIR__."/date.txt", $date);
 
-    file_put_contents(__DIR__."/date.txt", $date);
+    // $items = Capsule::table("tblinvoiceitems")->whereRaw("TIMESTAMPDIFF(MINUTE, `updated_on` , NOW()) > 5")->get();
+
+    Capsule::table('tblinvoiceitems')
+            ->where('status', 'Paid')
+            ->where('notes', 'Managed by Proxmox addon')
+            ->whereRaw('TIME(`updated_on`) + TIME(\'00:05\') <= TIME(NOW())')
+            ->update(array('status' => 'Queued'));
+
+    $item = Capsule::table('tblinvoiceitems')
+            ->where('status', 'Queued')
+            ->where('notes', 'Managed by Proxmox addon')
+            ->first();
+
+    Capsule::table('tblinvoiceitems')
+            ->where('id', $item->id)
+            ->update(array('status' => 'Creating'));
+
+    sleep(20);
+
+    Capsule::table('tblinvoiceitems')
+            ->where('id', $item->id)
+            ->update(array('status' => 'Created'));
+
+    //logActivity('Hook on update item: '.json_encode($item));
 });
+
+
+/**
+ * Hello World Widget.
+ */
 
 add_hook('AdminHomeWidgets', 1, function() {
     return new HelloWorldWidget();
 });
 
-/**
- * Hello World Widget.
- */
 class HelloWorldWidget extends \WHMCS\Module\AbstractWidget
 {
     protected $title = 'Hello World';
@@ -140,10 +167,6 @@ class HelloWorldWidget extends \WHMCS\Module\AbstractWidget
 
     public function generateOutput($data)
     {
-        return <<<EOF
-<div class="widget-content-padded">
-    Hello World!
-</div>
-EOF;
+        return "<div class=\"widget-content-padded\">Hello World!</div>";
     }
 }
