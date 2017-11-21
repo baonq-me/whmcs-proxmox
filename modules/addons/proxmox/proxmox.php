@@ -27,7 +27,6 @@
  */
 
 //use Illuminate\Database\Capsule\Manager as Capsule;
-
 use WHMCS\Database\Capsule;
 
 if (!defined("WHMCS")) {
@@ -187,38 +186,46 @@ function proxmox_activate()
 
     Capsule::schema()->dropIfExists('mod_proxmox');
 
-    Capsule::schema()->create(
-      'mod_proxmox',
-      function ($table) {
-        $table->integer('id')->unique();
-        $table->integer('invoiceid');
-        $table->integer('userid');
-        $table->string('type');
-        $table->integer('relid');
-        $table->text('info');                           // VM configuration, json format
-        $table->timestamp('paid_at');                   // Time when this VM is paid
-        $table->date('created_at');                     // Time until auto create
-        $table->string('paymentmethod')->nullable();
-        $table->string('status');
-        $table->string('notes')->nullable();
-        $table->boolean('hide')->default('0');
-        $table->boolean('autocreate')->default('1');
+    // Capsule::schema()->create(
+    //   'mod_proxmox',
+    //   function ($table) {
+    //     $table->integer('id')->unique();
+    //     $table->integer('invoiceid');
+    //     $table->integer('userid');
+    //     $table->string('type');
+    //     $table->integer('relid');
+    //     $table->text('info');                           // VM configuration, json format
+    //     $table->timestamp('paid_at');                   // Time when this VM is paid
+    //     $table->date('created_at');                     // Time until auto create
+    //     $table->string('paymentmethod')->nullable();
+    //     $table->string('status');
+    //     $table->string('notes')->nullable();
+    //     $table->boolean('hide')->default('0');
+    //     $table->boolean('autocreate')->default('1');
+    //
+    //     $table->primary('id');
+    //   }
+    // );
 
-        $table->primary('id');
-      }
-    );
+    Capsule::schema()->table('tblinvoiceitems', function($table)
+    {
+        $table->timestamp('updated_on');
+        $table->text('status');
+    });
 
     $trigger = "
 CREATE TRIGGER `update_invoiceitems` AFTER UPDATE ON `tblinvoices`
 FOR EACH ROW
 BEGIN
 IF NEW.`status` = 'Paid' THEN
-UPDATE `tblinvoiceitems` SET `notes` = 'Paid' WHERE `tblinvoiceitems`.`invoiceid` = NEW.`id`;
+UPDATE `tblinvoiceitems` SET `status` = 'Paid' WHERE `tblinvoiceitems`.`invoiceid` = NEW.`id`;
+UPDATE `tblinvoiceitems` SET `updated_at` = NOW() WHERE `tblinvoiceitems`.`invoiceid` = NEW.`id`;
 END IF;
 END;
 ";
-
     Capsule::connection()->getPdo()->exec($trigger);
+
+
 
     return array(
         'status' => 'success', // Supported values here include: success, error or info
@@ -242,6 +249,11 @@ function proxmox_deactivate()
     // Undo any database and schema modifications made by your module here
     Capsule::schema()->dropIfExists('mod_proxmox');
     Capsule::connection()->getPdo()->exec('DROP TRIGGER IF EXISTS `update_invoiceitems`');
+    Capsule::schema()->table('tblinvoiceitems', function($table)
+    {
+        $table->dropColumn('updated_on');
+        $table->dropColumn('status');
+    });
 
     return array(
         'status' => 'success', // Supported values here include: success, error or info
