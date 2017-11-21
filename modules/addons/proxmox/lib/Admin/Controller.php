@@ -30,10 +30,28 @@ class Controller {
 
         $proxmox = new PHPProxmox($vars);
         $proxmox->buildConfig();
-        $status = implode("<br/>", $proxmox->getSystemStatus());
+        $status = implode(" ", $proxmox->getSystemStatus());
 
-        $smarty->assign('status', $status);
-        $smarty->assign('modulelink', $vars['modulelink']);
+        preg_match_all('/pve cpu thread (\d+) loadavg ([\.0-9]+) ([\.0-9]+) ([\.0-9]+)/', $status, $cpu);
+        // grep 'cpu ' /proc/stat | awk '{usage=($2+$4)*100/($2+$4+$5)} END {print usage "%"}'
+        $smarty->assign('cpu_percent', round(100 * $cpu[2][0] / $cpu[1][0], 2));
+        $smarty->assign('cpu_load1', $cpu[2][0]);
+        $smarty->assign('cpu_load2', $cpu[3][0]);
+        $smarty->assign('cpu_load3', $cpu[4][0]);
+
+
+        preg_match_all('/pve mem ram ([\.0-9]+) \w+ ([\.0-9]+) \w+ ([\.0-9]+)%/', $status, $mem);
+        $smarty->assign('mem_percent', $mem[3][0]);
+        $smarty->assign('mem_used', $mem[1][0]);
+        $smarty->assign('mem_total', $mem[2][0]);
+
+        preg_match_all("/pve storage {$vars['Default Storage Engine']} ([\.0-9]+) \w+ ([\.0-9]+) \w+ ([\.0-9]+)%/", $status, $disk);
+        $smarty->assign('disk_percent', $disk[3][0]);
+        $smarty->assign('disk_used', $disk[1][0]);
+        $smarty->assign('disk_total', $disk[2][0]);
+
+
+        //$smarty->assign('modulelink', $vars['modulelink']);
         $smarty->assign('configPVEHostname', $vars['PVE Hostname']);
         $smarty->assign('configPVEUser', $vars['PVE User']);
         //$smarty->assign('configPVEPassword', $vars['PVE Password']);

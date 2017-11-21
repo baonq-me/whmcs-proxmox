@@ -19,7 +19,7 @@
                             CPU
                         </div>
                         <div class="number">
-                            <span style="color:#49a94d;">{$cpu_usage}%</span>
+                            <span style="color:#49a94d;">{$cpu_percent}% ({$cpu_load1} {$cpu_load2} {$cpu_load3})</span>
                         </div>
                         <div class="clear:both;"></div>
                         <div class="progress">
@@ -34,11 +34,11 @@
                             Memory
                         </div>
                         <div class="number">
-                            <span style="color:#49a94d;">{$memory_usage}% ({$memory_total})</span>
+                            <span style="color:#49a94d;">{$mem_percent}% ({$mem_used} GB / {$mem_total} GB)</span>
                         </div>
                         <div class="clear:both;"></div>
                         <div class="progress">
-                            <span class="progress-bar progress-bar-success progress-bar-striped" style="width: {$memory_usage}%"></span>
+                            <span class="progress-bar progress-bar-success progress-bar-striped" style="width: {$mem_percent}%"></span>
                         </div>
                     </div>
                 </div>
@@ -51,15 +51,83 @@
                             Disk
                         </div>
                         <div class="number">
-                            <span style="color:#49a94d;">{$disk_usage} ({$disk_total})</span>
+                            <span style="color:#49a94d;">{$disk_percent}% ({$disk_used} GB / {$disk_total} GB)</span>
                         </div>
                         <div class="clear:both;"></div>
                         <div class="progress">
-                            <span class="progress-bar progress-bar-success progress-bar-striped" style="width: {$disk_usage}%"></span>
+                            <span class="progress-bar progress-bar-success progress-bar-striped" style="width: {$disk_percent}%"></span>
                         </div>
                     </div>
                 </div>
             </div>
+            <h3>
+              Proxmox System Infomation
+              <button class="btn btn-default">Edit</button>
+            </h3>
+            <div class="rows">
+              <div class="col-sm-6">
+                <table class="table table-hover">
+                   <tbody>
+                     <tr>
+                       <td>PVE Hostname</td>
+                       <td>{$configPVEHostname}</td>
+                     </tr>
+                     <tr>
+                       <td>PVE User</td>
+                       <td>{$configPVEUser}</td>
+                     </tr>
+                     <tr>
+                       <td>Default Storage Bus</td>
+                       <td>{$configStorageBus}</td>
+                     </tr>
+                     <tr>
+                       <td>Default Storage Engine</td>
+                       <td>{$configStorageEngine}</td>
+                     </tr>
+                     <tr>
+                       <td>Default Storage Format</td>
+                       <td>{$configStorageFormat}</td>
+                     </tr>
+                     <tr>
+                       <td>Cloudinit Storage</td>
+                       <td>{$configCloudInitStorage}</td>
+                     </tr>
+                   </tbody>
+                 </table>
+             </div>
+             <div class="col-sm-6">
+               <table class="table table-hover">
+                  <tbody>
+                    <tr>
+                      <td>PVE Hostname</td>
+                      <td>{$configPVEHostname}</td>
+                    </tr>
+                    <tr>
+                      <td>PVE User</td>
+                      <td>{$configPVEUser}</td>
+                    </tr>
+                    <tr>
+                      <td>Default Storage Bus</td>
+                      <td>{$configStorageBus}</td>
+                    </tr>
+                    <tr>
+                      <td>Default Storage Engine</td>
+                      <td>{$configStorageEngine}</td>
+                    </tr>
+                    <tr>
+                      <td>Default Storage Format</td>
+                      <td>{$configStorageFormat}</td>
+                    </tr>
+                    <tr>
+                      <td>Cloudinit Storage</td>
+                      <td>{$configCloudInitStorage}</td>
+                    </tr>
+                  </tbody>
+                </table>
+            </div>
+           </div>
+
+
         </div>
         <div id="invoice" class="tab-pane fade">
             <p>Invoices that are paid will display here.</p>
