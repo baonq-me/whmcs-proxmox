@@ -4,6 +4,8 @@ namespace WHMCS\Module\Addon\Proxmox\Admin;
 
 use WHMCS\Module\Addon\Proxmox\PHPProxmox\PHPProxmox;
 
+//use Illuminate\Database\Capsule\Manager as Capsule;
+use WHMCS\Database\Capsule;
 
 //require_once("../vendor/smarty/smarty/libs/SmartyBC.class.php");
 
@@ -45,24 +47,62 @@ class Controller {
         $smarty->assign('mem_used', $mem[1][0]);
         $smarty->assign('mem_total', $mem[2][0]);
 
-        preg_match_all("/pve storage {$vars['Default Storage Engine']} ([\.0-9]+) \w+ ([\.0-9]+) \w+ ([\.0-9]+)%/", $status, $disk);
-        $smarty->assign('disk_percent', $disk[3][0]);
-        $smarty->assign('disk_used', $disk[1][0]);
-        $smarty->assign('disk_total', $disk[2][0]);
+        preg_match_all("/pve storage {$vars['Default Storage Engine']} ([\.0-9]+) \w+ ([\.0-9]+) \w+ ([\.0-9]+)%/", $status, $storage);
+        $smarty->assign('storage_percent', $storage[3][0]);
+        $smarty->assign('storage_used', $storage[1][0]);
+        $smarty->assign('storage_total', $storage[2][0]);
+        $smarty->assign('storage_engine', $vars['Default Storage Engine']);
+
+        ksort($vars);
+        unset($vars['smarty']);
+        unset($vars['smartybc']);
+        unset($vars['PVE Password']);
+        $smarty->assign('configPVE', $vars);
+
+        $paiditems_query = Capsule::table('tblinvoiceitems')
+                                ->where('tblinvoiceitems.status', 'Paid')
+                                ->where('tblinvoiceitems.notes', 'Managed by Proxmox addon')
+                                ->join('tblclients', 'tblclients.id', '=', 'tblinvoiceitems.userid')
+                                ->select(Capsule::raw('CONCAT(tblclients.firstname, \' \', tblclients.lastname) as username, tblinvoiceitems.id, tblinvoiceitems.invoiceid, tblinvoiceitems.userid, tblinvoiceitems.type, tblinvoiceitems.description, DATE_FORMAT(`updated_on`, \'%b %d, %Y %k:%i:%s\') as updated_on, DATE_FORMAT(`updated_on` + TIME(\'00:05\'), \'%b %d, %Y %k:%i:%s\') as time_expired, tblinvoiceitems.status'))
+                                ->get();
+        // Convert object to associate array
+        $paiditems = json_decode(json_encode($paiditems_query), TRUE);
+
+        $smarty->assign('invoiceitems', $paiditems);
 
 
-        //$smarty->assign('modulelink', $vars['modulelink']);
-        $smarty->assign('configPVEHostname', $vars['PVE Hostname']);
-        $smarty->assign('configPVEUser', $vars['PVE User']);
-        //$smarty->assign('configPVEPassword', $vars['PVE Password']);
-        $smarty->assign('configStorageBus', $vars['Default Storage Bus']);
-        $smarty->assign('configStorageEngine', $vars['Default Storage Engine']);
-        $smarty->assign('configStorageFormat', $vars['Default Storage Format']);
-        $smarty->assign('configCloudInitStorage', $vars['CloudInit Storage']);
+        $queueditems_query = Capsule::table('tblinvoiceitems')
+                                ->where('tblinvoiceitems.status', 'Queued')
+                                ->orWhere('tblinvoiceitems.status', 'Creating')
+                                ->where('tblinvoiceitems.notes', 'Managed by Proxmox addon')
+                                ->join('tblclients', 'tblclients.id', '=', 'tblinvoiceitems.userid')
+                                ->select(Capsule::raw('CONCAT(tblclients.firstname, \' \', tblclients.lastname) as username, tblinvoiceitems.id, tblinvoiceitems.invoiceid, tblinvoiceitems.userid, tblinvoiceitems.type, tblinvoiceitems.description, DATE_FORMAT(`updated_on`, \'%b %d, %Y %k:%i:%s\') as updated_on, tblinvoiceitems.status'))
+                                ->get();
+        // Convert object to associate array
+        $queueditems = json_decode(json_encode($queueditems_query), TRUE);
+
+        $smarty->assign('queueditems', $queueditems);
+
+        logActivity(json_encode($queueditems));
+
+
+
+
+        $createditems_query = Capsule::table('tblinvoiceitems')
+                                ->orWhere('tblinvoiceitems.status', 'Created')
+                                ->where('tblinvoiceitems.notes', 'Managed by Proxmox addon')
+                                ->join('tblclients', 'tblclients.id', '=', 'tblinvoiceitems.userid')
+                                ->select(Capsule::raw('CONCAT(tblclients.firstname, \' \', tblclients.lastname) as username, tblinvoiceitems.id, tblinvoiceitems.invoiceid, tblinvoiceitems.userid, tblinvoiceitems.type, tblinvoiceitems.description, DATE_FORMAT(`updated_on`, \'%b %d, %Y %k:%i:%s\') as updated_on, tblinvoiceitems.status'))
+                                ->get();
+        // Convert object to associate array
+        $createditems = json_decode(json_encode($createditems_query), TRUE);
+        $smarty->assign('createditems', $createditems);
+
+        logActivity(json_encode($createditems));
 
         $smarty->display(dirname(__FILE__) . '/../../templates/admin/index.tpl');
 
-        return '';
+        return;
     }
 
     /**
@@ -103,5 +143,11 @@ class Controller {
 </p>
 
 EOF;
+    }
+
+    public function test($vars)
+    {
+      $smarty = $vars['smarty'];
+      $smarty->display(dirname(__FILE__) . '/../../templates/admin/test.tpl');
     }
 }
