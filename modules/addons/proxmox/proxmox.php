@@ -218,8 +218,9 @@ CREATE TRIGGER `update_invoiceitems` AFTER UPDATE ON `tblinvoices`
 FOR EACH ROW
 BEGIN
 IF NEW.`status` = 'Paid' THEN
+UPDATE `tblinvoiceitems` SET `notes` = 'Managed by Proxmox addon' WHERE `tblinvoiceitems`.`invoiceid` = NEW.`id`;
 UPDATE `tblinvoiceitems` SET `status` = 'Paid' WHERE `tblinvoiceitems`.`invoiceid` = NEW.`id`;
-UPDATE `tblinvoiceitems` SET `updated_at` = NOW() WHERE `tblinvoiceitems`.`invoiceid` = NEW.`id`;
+UPDATE `tblinvoiceitems` SET `updated_at` = DATE_FORMAT(NOW(), \"%b %d, %Y %k:%i:%s\") WHERE `tblinvoiceitems`.`invoiceid` = NEW.`id`;
 END IF;
 END;
 ";
@@ -254,6 +255,7 @@ function proxmox_deactivate()
         $table->dropColumn('updated_on');
         $table->dropColumn('status');
     });
+    Capsule::table('tblinvoiceitems')->where('notes', 'Managed by Proxmox addon')->update(array('notes' => ''));
 
     return array(
         'status' => 'success', // Supported values here include: success, error or info
@@ -273,19 +275,19 @@ function proxmox_deactivate()
  */
 function proxmox_upgrade($vars)
 {
-    $currentlyInstalledVersion = $vars['version'];
-
-    /// Perform SQL schema changes required by the upgrade to version 1.1 of your module
-    if ($currentlyInstalledVersion < 1.1) {
-        $query = "ALTER `mod_proxmox` ADD `demo2` TEXT NOT NULL ";
-        full_query($query);
-    }
-
-    /// Perform SQL schema changes required by the upgrade to version 1.2 of your module
-    if ($currentlyInstalledVersion < 1.2) {
-        $query = "ALTER `mod_proxmox` ADD `demo3` TEXT NOT NULL ";
-        full_query($query);
-    }
+    // $currentlyInstalledVersion = $vars['version'];
+    //
+    // /// Perform SQL schema changes required by the upgrade to version 1.1 of your module
+    // if ($currentlyInstalledVersion < 1.1) {d
+    //     $query = "ALTER `mod_proxmox` ADD `demo2` TEXT NOT NULL ";
+    //     full_query($query);
+    // }
+    //
+    // /// Perform SQL schema changes required by the upgrade to version 1.2 of your module
+    // if ($currentlyInstalledVersion < 1.2) {
+    //     $query = "ALTER `mod_proxmox` ADD `demo3` TEXT NOT NULL ";
+    //     full_query($query);
+    // }
 }
 
 /**
@@ -311,12 +313,12 @@ function proxmox_output($vars)
     $_lang = $vars['_lang']; // an array of the currently loaded language variables
 
     // Get module configuration parameters
-    $configTextField = $vars['Text Field Name'];
-    $configPasswordField = $vars['Password Field Name'];
-    $configCheckboxField = $vars['Checkbox Field Name'];
-    $configDropdownField = $vars['Dropdown Field Name'];
-    $configRadioField = $vars['Radio Field Name'];
-    $configTextareaField = $vars['Textarea Field Name'];
+    // $configTextField = $vars['Text Field Name'];
+    // $configPasswordField = $vars['Password Field Name'];
+    // $configCheckboxField = $vars['Checkbox Field Name'];
+    // $configDropdownField = $vars['Dropdown Field Name'];
+    // $configRadioField = $vars['Radio Field Name'];
+    // $configTextareaField = $vars['Textarea Field Name'];
 
     // Dispatch and handle request here. What follows is a demonstration of one
     // possible way of handling this using a very basic dispatcher implementation.
