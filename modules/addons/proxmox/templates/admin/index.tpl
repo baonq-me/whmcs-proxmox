@@ -1,5 +1,6 @@
 <link rel="stylesheet" href="http://whmcs.vietnix.vn/modules/addons/proxmox/templates/admin/proxmox.css">
 <script type="text/javascript" src="http://whmcs.vietnix.vn/modules/addons/proxmox/templates/admin/proxmox.js"></script>
+<script src="https://rawgit.com/notifyjs/notifyjs/master/dist/notify.js"></script>
 
 <div>
   <a class="btn btn-default" href="http://whmcs.vietnix.vn/admin/addonmodules.php?module=proxmox">Reload page</a>
@@ -14,6 +15,7 @@
    </ul>
    <div class="tab-content">
       <div id="info" class="tab-pane fade in active">
+
          <div class="icon-stats">
             <div class="row">
                <div class="col-sm-6">
@@ -22,7 +24,11 @@
                   </div>
                   <div class="note">CPU</div>
                   <div class="number">
-                     <span style="color:#49a94d;">{$cpu_percent}% ({$cpu_load1} {$cpu_load2} {$cpu_load3})</span>
+                    {if $pveConnection eq 0}
+                      <span style="color: red">Could not connect to server</span>
+                    {else}
+                      <span style="color:#49a94d;">{$cpu_percent}% ({$cpu_load1} {$cpu_load2} {$cpu_load3})</span>
+                    {/if}
                   </div>
                   <div class="clear:both;"></div>
                   <div class="progress">
@@ -35,7 +41,11 @@
                   </div>
                   <div class="note">Memory</div>
                   <div class="number">
-                     <span style="color:#49a94d;">{$mem_percent}% ({$mem_used} GB / {$mem_total} GB)</span>
+                    {if $pveConnection eq 0}
+                      <span style="color: red">Could not connect to server</span>
+                    {else}
+                      <span style="color:#49a94d;">{$mem_percent}% ({$mem_used} GB / {$mem_total} GB)</span>
+                    {/if}
                   </div>
                   <div class="clear:both;"></div>
                   <div class="progress">
@@ -50,7 +60,11 @@
                   </div>
                   <div class="note">Storage ({$storage_engine})</div>
                   <div class="number">
-                     <span style="color:#49a94d;">{$storage_percent}% ({$storage_used} GB / {$storage_total} GB)</span>
+                    {if $pveConnection eq 0}
+                      <span style="color: red">Could not connect to server</span>
+                    {else}
+                      <span style="color:#49a94d;">{$storage_percent}% ({$storage_used} GB / {$storage_total} GB)</span>
+                    {/if}
                   </div>
                   <div class="clear:both;"></div>
                   <div class="progress">
@@ -94,58 +108,44 @@
          <table class="datatable no-margin" width="100%" border="0" cellspacing="1" cellpadding="3">
             <tbody>
                <tr>
-                  <th style="width: 8%;">Item ID</th>
+                  <th style="width: 7%;">Item ID</th>
                   <th style="width: 8%;">Invoice ID</th>
                   <th style="width: 12%;">Customer</th>
-                  <th style="width: 7%;">Type</th>
+                  <th style="width: 6%;">Type</th>
                   <th style="width: 35%;">Description</th>
                   <th style="width: 15%;">Updated on</th>
-                  <th style="width: 5%;">Status</th>
-                  <th style="width: 10%;">Time left</th>
-                  <!-- <th style="width: 5%;"></th>
-                     <th style="width: 5%;"></th>
-                     <th style="width: 5%;"></th> -->
+                  <th style="width: 12%;">IP address</th>
+                  <th style="width: 5%;">Action</th>
                </tr>
             </tbody>
          </table>
          <table class="datatable no-margin" width="100%" border="0" cellspacing="1" cellpadding="3">
             <tbody class="list-group">
-               {foreach from=$invoiceitems key=ID item=i}
-               <tr class="text-center">
-                  <td style="width: 8%;">{'#'}{$i.id}</td>
+               {foreach from=$paiditems key=ID item=i}
+               <tr class="text-center" id="item-{$i.id}">
+                  <td style="width: 7%;">{'#'}{$i.id}</td>
                   <td style="width: 8%;"><a target="_blank" href="http://whmcs.vietnix.vn/admin/invoices.php?action=edit&id={$i.invoiceid}">{'#'}{$i.invoiceid}</a></td>
                   <td style="width: 12%;"><a target="_blank" href="http://whmcs.vietnix.vn/admin/clientssummary.php?userid={$i.userid}">{$i.username}</a></td>
-                  <td style="width: 7%;">{$i.type}</td>
+                  <td style="width: 6%;">{$i.type}</td>
                   <td style="width: 35%;">{$i.description}</td>
-                  <td style="width: 15%;">{$i.updated_on}</td>
-                  <td style="width: 5%;">{$i.status}</td>
-                  <td style="width: 10%;" title="This invoice will be processed automatically after this time.">
-                     <span id="clock-invoice-{$i.id}"></span>
+                  <td style="width: 15%;">{$i.updated_at}</td>
+                  <td style="width: 12%;">
+                      <input type="text" class="form-control ipaddress">
                   </td>
-                  <!-- <td style="width: 5%;">
-                     <a title="Create VM for this invoice now">
-                     <img src="images/icons/add.png"/>
-                     </a>
-                     </td>
-                     <td style="width: 5%;">
-                     <a title="View list of VMs">
-                     <img src="images/icons/logs.png"/>
-                     </a>
-                     </td>
-                     <td style="width: 5%;">
-                     <a title="Hide this invoice and move it to pending list">
-                     <img src="images/icons/disabled.png"/>
-                     </a>
-                     </td> -->
+                  <td style="width: 5%;">
+                     <button class="btn btn-success" onclick="create('{$i.id}')">
+                       <span class="glyphicon glyphicon-plus"></span>
+                     </button>
+                  </td>
                </tr>
                {/foreach}
+               {if count($paiditems) eq 0}
+               <tr>
+                 <td colspan="8">No paid items</td>
+               </tr>
+               {/if}
             </tbody>
          </table>
-         <script type="text/javascript">
-            {foreach from=$invoiceitems key=ID item=i}
-            countdown('{$i.time_expired}', '{$i.id}');
-            {/foreach}
-         </script>
       </div>
       <div id="queued" class="tab-pane fade">
          <p>Items that are waiting for creation process will be shown here.</p>
@@ -171,10 +171,15 @@
                   <td style="width: 12%;"><a target="_blank" href="http://whmcs.vietnix.vn/admin/clientssummary.php?userid={$i.userid}">{$i.username}</a></td>
                   <td style="width: 7%;">{$i.type}</td>
                   <td style="width: 40%;">{$i.description}</td>
-                  <td style="width: 15%;">{$i.updated_on}</td>
+                  <td style="width: 15%;">{$i.updated_at}</td>
                   <td style="width: 10%;">{$i.status}</td>
                </tr>
                {/foreach}
+               {if count($queueditems) eq 0}
+               <tr>
+                 <td colspan="8">No queued items</td>
+               </tr>
+               {/if}
             </tbody>
          </table>
       </div>
@@ -197,7 +202,7 @@
          </table>
          <table class="datatable no-margin" width="100%" border="0" cellspacing="1" cellpadding="3">
             <tbody class="list-group">
-                {foreach from=$createditems key=ID item=i}
+              {foreach from=$createditems key=ID item=i}
                <tr class="text-center">
                   <td style="width: 8%;">#{$i.id}</td>
                   <td style="width: 8%;"><a target="_blank" href="http://whmcs.vietnix.vn/admin/invoices.php?action=edit&id={$i.invoiceid}">{'#'}{$i.invoiceid}</a></td>
@@ -210,10 +215,15 @@
                     <br/>
                     {$i.description}
                   </td>
-                  <td style="width: 15%;">{$i.updated_on}</td>
+                  <td style="width: 15%;">{$i.updated_at}</td>
                   <td style="width: 10%;">{$i.status}</td>
                </tr>
                {/foreach}
+               {if count($createditems) eq 0}
+               <tr>
+                 <td colspan="8">No created items</td>
+               </tr>
+               {/if}
             </tbody>
          </table>
       </div>
@@ -228,4 +238,6 @@
        });
    });
 </script>
-<!-- {$debug|print_r} -->
+
+
+<!--{$debug|var_dump}-->
