@@ -9,27 +9,47 @@ class PHPProxmox
 
   public function __construct($vars) {
     $this->vars = $vars;
-
-    if ($vars['PyProxmox Module'] != 'auto')
-      $this->home = $vars['PyProxmox Module'];
   }
 
   public function buildConfig()
   {
     $config = <<<EOF
-{
-   "host": "{$this->vars['PVE Hostname']}",
-   "user": "{$this->vars['PVE User']}",
-   "password": "{$this->vars['PVE Password']}",
-   "storage_bus": "{$this->vars['Default Storage Bus']}",
-   "storage_engine": "{$this->vars['Default Storage Engine']}",
-   "storage_format": "{$this->vars['Default Storage Format']}",
-   "cloudinit_storage": "{$this->vars['CloudInit Storage']}"
-}
-EOF;
+[server]
+; PVE server
+host = {$this->vars['PVE Hostname']}
 
-    file_put_contents($this->home."proxmox.conf", $config) === TRUE;
-    logActivity("PHPProxmox/Config: ".file_get_contents($this->home."proxmox.conf"));
+; User (must include realm)
+user = {$this->vars['PVE User']}
+
+; Password
+password = {$this->vars['PVE Password']}
+
+[storage]
+; Default storage bus: ide, sata, scsi, virtio
+bus = {$this->vars['Default Storage Bus']}
+
+; Default storage engine
+engine = {$this->vars['Default Storage Engine']}
+
+; Default storage format: raw, qcow2, vmdk
+format = {$this->vars['Default Storage Format']}
+
+; Size of root partition of template VM
+root = 3 GiB
+
+; Storage engine that will store cloudinit datasources (ISO image)
+cloudinit = {$this->vars['CloudInit Storage']}
+
+[qemu]
+; Emulated CPU type. Use 'host' to maximize VM performance. Use 'kvm64' for compability.
+cpu_type = host
+
+[template]
+; Template VM id to be cloned
+vmid = 104
+EOF;
+    $result = file_put_contents($this->home.'proxmox.cfg', $config) == TRUE ? 'Success': 'Failed to write !';
+    logActivity('PHPProxmox/Config: '.$result);
   }
 
   public function getSystemStatus()
