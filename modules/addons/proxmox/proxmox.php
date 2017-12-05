@@ -123,13 +123,6 @@ function proxmox_config()
                 'Default' => 'cloudinit',
                 'Description' => '',
             ),
-            'PyProxmox Module' => array(
-                'FriendlyName' => 'PyProxmox Module',
-                'Type' => 'text',
-                'Size' => '40',
-                'Default' => '../modules/addons/proxmox/pyproxmox',
-                'Description' => 'Path to PyProxmox module. Relative path and absolute path are both accepted. Type \'auto\' for default path.',
-            ),
             // the yesno field type displays a single checkbox option
             /*'Checkbox Field Name' => array(
                 'FriendlyName' => 'Checkbox Field Name',
@@ -181,35 +174,64 @@ function proxmox_config()
 function proxmox_activate()
 {
     // Create custom tables and schema required by your module
-    $query = "CREATE TABLE `mod_proxmox` (`id` INT( 1 ) NOT NULL AUTO_INCREMENT PRIMARY KEY ,`demo` TEXT NOT NULL )";
-    full_query($query);
+    //$query = "CREATE TABLE `mod_proxmox` (`id` INT( 1 ) NOT NULL AUTO_INCREMENT PRIMARY KEY ,`demo` TEXT NOT NULL )";
+    //full_query($query);
 
-    Capsule::schema()->dropIfExists('mod_proxmox');
+    Capsule::schema()->dropIfExists('mod_proxmox_info');
+    Capsule::schema()->dropIfExists('mod_proxmox_resource');
+    Capsule::schema()->dropIfExists('mod_proxmox_usage');
 
-    // Capsule::schema()->create(
-    //   'mod_proxmox',
-    //   function ($table) {
-    //     $table->integer('id')->unique();
-    //     $table->integer('invoiceid');
-    //     $table->integer('userid');
-    //     $table->string('type');
-    //     $table->integer('relid');
-    //     $table->text('info');                           // VM configuration, json format
-    //     $table->timestamp('paid_at');                   // Time when this VM is paid
-    //     $table->date('created_at');                     // Time until auto create
-    //     $table->string('paymentmethod')->nullable();
-    //     $table->string('status');
-    //     $table->string('notes')->nullable();
-    //     $table->boolean('hide')->default('0');
-    //     $table->boolean('autocreate')->default('1');
-    //
-    //     $table->primary('id');
-    //   }
-    // );
+    Capsule::schema()->create(
+      'mod_proxmox_info',
+      function ($table) {
+        $table->increments('id')->unique();
+        $table->text('hostname');
+        $table->text('username');
+        $table->text('password');
+        $table->text('status');
+        $table->timestamp('updated_at');
+        $table->string('notes');
+
+        //$table->primary('id');
+      }
+    );
+
+    Capsule::schema()->create(
+      'mod_proxmox_resource',
+      function ($table) {
+        $table->increments('id')->unique();
+        $table->integer('cpus');
+        $table->integer('memory');
+        $table->integer('storage');
+        $table->text('status');
+        $table->timestamp('updated_at');
+        $table->string('notes');
+
+        //$table->primary('id');
+        $table->foreign('id')->references('id')->on('mod_proxmox_info');
+      }
+    );
+
+    Capsule::schema()->create(
+      'mod_proxmox_usage',
+      function ($table) {
+        $table->increments('id')->unique();
+        $table->float('cpuload');
+        $table->float('memory');
+        $table->float('storage');
+        $table->text('status');
+        $table->timestamp('updated_at');
+        $table->string('notes');
+
+        //$table->primary('id');
+        $table->foreign('id')->references('id')->on('mod_proxmox_info');
+      }
+    );
 
     Capsule::schema()->table('tblinvoiceitems', function($table)
     {
-        $table->timestamp('updated_on');
+        $table->text('ipaddress');
+        $table->timestamp('updated_at');
         $table->text('status');
     });
 
@@ -219,18 +241,28 @@ FOR EACH ROW
 BEGIN
 IF NEW.`status` = 'Paid' THEN
 UPDATE `tblinvoiceitems` SET `notes` = 'Managed by Proxmox addon' WHERE `tblinvoiceitems`.`invoiceid` = NEW.`id`;
-UPDATE `tblinvoiceitems` SET `status` = 'Paid' WHERE `tblinvoiceitems`.`invoiceid` = NEW.`id`;
-UPDATE `tblinvoiceitems` SET `updated_at` = DATE_FORMAT(NOW(), \"%b %d, %Y %k:%i:%s\") WHERE `tblinvoiceitems`.`invoiceid` = NEW.`id`;
+UPDATE `tblinvoiceitems` SET `status` = 'Paid'                    WHERE `tblinvoiceitems`.`invoiceid` = NEW.`id`;
+UPDATE `tblinvoiceitems` SET `updated_at` = NOW()                 WHERE `tblinvoiceitems`.`invoiceid` = NEW.`id`;
+UPDATE `tblorders` SET `tblorders`.`status` = 'Active'            WHERE `tblorders`.`invoiceid` = NEW.`id`;
 END IF;
 END;
 ";
     Capsule::connection()->getPdo()->exec($trigger);
 
+//UPDATE `tblinvoiceitems` SET `updated_on` = DATE_FORMAT(NOW(), '%b %d, %Y %k:%i:%s');
 
+    // Capsule::table('tbladdonmodules')
+    //         ->where('module', 'proxmox')
+    //         ->where('setting', 'access')
+    //         ->update(array('value' => '1,2,3'));
+
+    Capsule::table('tbladdonmodules')->insert(
+        array('module' => 'proxmox', 'setting' => 'access', 'value' => '1,2,3')
+    );
 
     return array(
         'status' => 'success', // Supported values here include: success, error or info
-        'description' => 'Addon is activated successfully.',
+        'description' => 'Addon is activated successfully. Please visit admin/addonmodules.php?module=proxmox for configurations.',
     );
 }
 
@@ -247,19 +279,21 @@ END;
  */
 function proxmox_deactivate()
 {
-    // Undo any database and schema modifications made by your module here
-    Capsule::schema()->dropIfExists('mod_proxmox');
+    //Capsule::schema()->dropIfExists('mod_proxmox_info');
+    //Capsule::schema()->dropIfExists('mod_proxmox_resource');
+    //Capsule::schema()->dropIfExists('mod_proxmox_usage');
+
     Capsule::connection()->getPdo()->exec('DROP TRIGGER IF EXISTS `update_invoiceitems`');
     Capsule::schema()->table('tblinvoiceitems', function($table)
     {
-        $table->dropColumn('updated_on');
-        $table->dropColumn('status');
+        $table->dropColumn(['ipaddress', 'updated_at', 'status']);
     });
+
     Capsule::table('tblinvoiceitems')->where('notes', 'Managed by Proxmox addon')->update(array('notes' => ''));
 
     return array(
         'status' => 'success', // Supported values here include: success, error or info
-        'description' => 'Addon is disabled. All database is wiped out.',
+        'description' => 'Addon is disabled. Infomation about Proxmox Cluster will be kept.',
     );
 }
 
@@ -307,22 +341,6 @@ function proxmox_output($vars)
     $vars['smarty'] = new Smarty();
     $vars['smartybc'] = new SmartyBC();
 
-    // Get common module parameters
-    $modulelink = $vars['modulelink']; // eg. addonmodules.php?module=addonmodule
-    $version = $vars['version']; // eg. 1.0
-    $_lang = $vars['_lang']; // an array of the currently loaded language variables
-
-    // Get module configuration parameters
-    // $configTextField = $vars['Text Field Name'];
-    // $configPasswordField = $vars['Password Field Name'];
-    // $configCheckboxField = $vars['Checkbox Field Name'];
-    // $configDropdownField = $vars['Dropdown Field Name'];
-    // $configRadioField = $vars['Radio Field Name'];
-    // $configTextareaField = $vars['Textarea Field Name'];
-
-    // Dispatch and handle request here. What follows is a demonstration of one
-    // possible way of handling this using a very basic dispatcher implementation.
-
     $action = isset($_REQUEST['action']) ? $_REQUEST['action'] : '';
 
     $dispatcher = new AdminDispatcher();
@@ -341,19 +359,6 @@ function proxmox_output($vars)
  */
 function proxmox_sidebar($vars)
 {
-    // Get common module parameters
-    $modulelink = $vars['modulelink'];
-    $version = $vars['version'];
-    $_lang = $vars['_lang'];
-
-    // Get module configuration parameters
-    $configTextField = $vars['Text Field Name'];
-    $configPasswordField = $vars['Password Field Name'];
-    $configCheckboxField = $vars['Checkbox Field Name'];
-    $configDropdownField = $vars['Dropdown Field Name'];
-    $configRadioField = $vars['Radio Field Name'];
-    $configTextareaField = $vars['Textarea Field Name'];
-
     $sidebar = '<p>Giờ hiện tại<br/>'.date("F j, Y, g:i a").'</p><p>Chưa biết điền cái gì vào sidebar</p>';
     return $sidebar;
 }
@@ -372,19 +377,6 @@ function proxmox_sidebar($vars)
  */
 function proxmox_clientarea($vars)
 {
-    // Get common module parameters
-    $modulelink = $vars['modulelink']; // eg. index.php?m=addonmodule
-    $version = $vars['version']; // eg. 1.0
-    $_lang = $vars['_lang']; // an array of the currently loaded language variables
-
-    // Get module configuration parameters
-    $configTextField = $vars['Text Field Name'];
-    $configPasswordField = $vars['Password Field Name'];
-    $configCheckboxField = $vars['Checkbox Field Name'];
-    $configDropdownField = $vars['Dropdown Field Name'];
-    $configRadioField = $vars['Radio Field Name'];
-    $configTextareaField = $vars['Textarea Field Name'];
-
     // Dispatch and handle request here. What follows is a demonstration of one
     // possible way of handling this using a very basic dispatcher implementation.
 
