@@ -31,6 +31,7 @@
 
 //use Illuminate\Database\Capsule\Manager as Capsule;
 use WHMCS\Database\Capsule;
+use WHMCS\Module\Addon\Proxmox\WHMCS_Data;
 
 add_hook('ClientEdit', 1, function(array $params) {
     try {
@@ -41,104 +42,9 @@ add_hook('ClientEdit', 1, function(array $params) {
     }
 });
 
-// Ref: https://github.com/dylanhansch/whmcs-order-management
-add_hook('InvoicePaid', 1, function($vars) {
-    $paidInvoiceID = $vars['invoiceid'];
-    logActivity("[Addon] Proxmox: Invoice #$paidInvoiceID is paid");
-
-    /*
-     * Accept paid orders
-     */
-
-    $command = 'GetOrders';
-    $values = array(
-        'status' => 'Pending',
-        'limitnum' => '100',
-    );
-    $invoiceid = $results['orders']['order'][0]['invoiceid'];
-
-    $results = localAPI($command, $values);
-
-    if ($results['result'] == 'success') {
-        $numReturned = $results['numreturned'] - 1;
-        for ($i = 0; $i <= $numReturned; $i++) {
-            $invoiceID = $results['orders']['order'][$i]['invoiceid'];
-            if ($invoiceID == $paidInvoiceID) {
-                $orderID = $results['orders']['order'][$i]['id'];
-
-                $command = 'AcceptOrder';
-                $values = array(
-                    'orderid' => $orderID,
-                );
-
-                $acceptOrderResults = localAPI($command, $values);
-
-                if ($acceptOrderResults['result'] != 'success') {
-                    logActivity("An error occured accepting order $invoiceID: " . $acceptOrderResults['result']);
-                } else
-                {
-                  $command = 'GetInvoice';
-                  $values = array(
-                      'invoiceid' => $paidInvoiceID,
-                  );
-                  $paidInvoice = localAPI($command, $values);
-                  foreach ($paidInvoice['items']['item'] as $invoice)
-                  {
-                      logActivity("[Addon] Proxmox: Invoice ID#$paidInvoiceID -> Item #{$invoice['id']} (relid = {$invoice['relid']}) -> Description: {$invoice['description']}");
-                      $vmConfigItems = Capsule::table('tblcustomfieldsvalues')->join('tblcustomfields', 'tblcustomfieldsvalues.fieldid', '=', 'tblcustomfields.id')->where('tblcustomfieldsvalues.relid', '=', $invoice['relid'])->select('fieldname', 'value')->get();
-                      logActivity("[Addon] Proxmox: ".json_encode($vmConfigItems));
-
-                      $pyProxmoxConfig = [];
-                      foreach ($vmConfigItems as $config)
-                      {
-                          logActivity("[Addon] Proxmox: Invoice ID#$paidInvoiceID -> Item #{$invoice['id']} (relid = {$invoice['relid']}) -> {$config->fieldname} => {$config->value}");
-                          $pyProxmoxConfig[$config->fieldname] = $config->value;
-                      }
-                      $cmd = "cd ../modules/addons/proxmox/pyproxmox; ./proxmox.py -c --node pve --cpu {$pyProxmoxConfig['CPU']} --mem {$pyProxmoxConfig['Memory']} --storage {$pyProxmoxConfig['Hard disk']} --hostname {$pyProxmoxConfig['Hostname']} --debug > pyproxmox.log";
-                      logActivity("[Addon] Proxmox: $cmd");
-                      //exec($cmd);
-                      logActivity(file_get_contents("/var/www/html/whmcs/modules/addons/proxmox/pyproxmox/pyproxmox.log"));
-
-                  }
-                }
-            }
-        }
-        return true;
-    } else {
-        logActivity("An error occured with getting orders: " . $results['result']);
-        return false;
-    }
-});
-
-
 add_hook('AfterCronJob', 1, function($vars) {
-    // $date = exec("date");
-    // file_put_contents(__DIR__."/date.txt", $date);
-
-    // $items = Capsule::table("tblinvoiceitems")->whereRaw("TIMESTAMPDIFF(MINUTE, `updated_on` , NOW()) > 5")->get();
-
-    Capsule::table('tblinvoiceitems')
-            ->where('status', 'Paid')
-            ->where('notes', 'Managed by Proxmox addon')
-            ->whereRaw('TIME(`updated_on`) + TIME(\'00:05\') <= TIME(NOW())')
-            ->update(array('status' => 'Queued'));
-
-    $item = Capsule::table('tblinvoiceitems')
-            ->where('status', 'Queued')
-            ->where('notes', 'Managed by Proxmox addon')
-            ->first();
-
-    Capsule::table('tblinvoiceitems')
-            ->where('id', $item->id)
-            ->update(array('status' => 'Creating'));
-
-    sleep(20);
-
-    Capsule::table('tblinvoiceitems')
-            ->where('id', $item->id)
-            ->update(array('status' => 'Created'));
-
-    //logActivity('Hook on update item: '.json_encode($item));
+    //WHMCS_Data::moveInvoiceItemsToQueue();
+    //WHMCS_Data::processInvoiceItems();
 });
 
 
