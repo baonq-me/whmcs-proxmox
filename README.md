@@ -65,6 +65,7 @@ Official release at December 29, 05:00 PM
 - [PHP tags](https://www.smarty.net/docsv2/en/language.function.php.tpl)
 - [Feature Requests - Expose Smarty Object](https://requests.whmcs.com/topic/expose-smarty-object)
 - [Foreach - Foreachelse](https://www.smarty.net/docsv2/en/language.function.foreach.tpl)
+- [{if},{elseif},{else}](https://www.smarty.net/docsv2/en/language.function.if.tpl)
 - []()
 - []()
 - []()
