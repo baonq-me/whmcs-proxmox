@@ -104,7 +104,15 @@
          </div>
       </div>
       <div id="paid" class="tab-pane fade">
-         <p>Items that are paid will display here.</p>
+          <div class="alert alert-info alert-dismissable fade in">
+            <a href="#" class="close" data-dismiss="alert" aria-label="close">&times;</a>
+            <p>Items that are paid will be displayed here.</p>
+            <p>Each item should be assigned an IP address. The plugin will automatically choose appropriate Proxmox server based on IP addresses you entered.</p>
+          </div>
+          <h2>Search</h2>
+          <p>Type something in the input field to search the table for such as invoices ID, customer names.</p>
+          <p><input class="form-control" type="text" placeholder="Search.."></p>
+
          <table class="datatable no-margin" width="100%" border="0" cellspacing="1" cellpadding="3">
             <tbody>
                <tr>
@@ -120,9 +128,9 @@
             </tbody>
          </table>
          <table class="datatable no-margin" width="100%" border="0" cellspacing="1" cellpadding="3">
-            <tbody class="list-group">
+            <tbody class="text-center">
                {foreach from=$paiditems key=ID item=i}
-               <tr class="text-center" id="item-{$i.id}">
+               <tr id="item-{$i.id}">
                   <td style="width: 7%;">{'#'}{$i.id}</td>
                   <td style="width: 8%;"><a target="_blank" href="http://whmcs.vietnix.vn/admin/invoices.php?action=edit&id={$i.invoiceid}">{'#'}{$i.invoiceid}</a></td>
                   <td style="width: 12%;"><a target="_blank" href="http://whmcs.vietnix.vn/admin/clientssummary.php?userid={$i.userid}">{$i.username}</a></td>
@@ -148,7 +156,14 @@
          </table>
       </div>
       <div id="queued" class="tab-pane fade">
-         <p>Items that are waiting for creation process will be shown here.</p>
+         <div class="alert alert-info alert-dismissable fade in">
+           <a href="#" class="close" data-dismiss="alert" aria-label="close">&times;</a>
+           <p>Items that are waiting for creation process will be shown here.</p>
+           <p>The plugin will process one item for each <strong>five minutes</strong> or when an item is created successfully.</p>
+         </div>
+         <h2>Search</h2>
+         <p>Type something in the input field to search the table for such as invoices ID, customer names.</p>
+         <p><input class="form-control" type="text" placeholder="Search.."></p>
          <table class="datatable no-margin" width="100%" border="0" cellspacing="1" cellpadding="3">
             <tbody>
                <tr>
@@ -163,7 +178,7 @@
             </tbody>
          </table>
          <table class="datatable no-margin" width="100%" border="0" cellspacing="1" cellpadding="3">
-            <tbody class="list-group">
+            <tbody>
                 {foreach from=$queueditems key=ID item=i}
                <tr class="text-center">
                   <td style="width: 8%;">#{$i.id}</td>
@@ -172,7 +187,15 @@
                   <td style="width: 7%;">{$i.type}</td>
                   <td style="width: 40%;">{$i.description}</td>
                   <td style="width: 15%;">{$i.updated_at}</td>
-                  <td style="width: 10%;">{$i.status}</td>
+                  <td style="width: 10%;">
+                    {if $i.status eq "Creating"}
+                    <div class="progress">
+                      <div class="progress-bar progress-bar-warning progress-bar-striped active" role="progressbar" aria-valuenow="100" aria-valuemin="0" aria-valuemax="100" style="width:100%"></div>
+                    </div>
+                    {else}
+                    {$i.status}
+                    {/if}
+                  </td>
                </tr>
                {/foreach}
                {if count($queueditems) eq 0}
@@ -186,7 +209,13 @@
 
 
       <div id="created" class="tab-pane fade">
-         <p>Items that are created will be shown here.</p>
+         <div class="alert alert-info alert-dismissable fade in">
+           <a href="#" class="close" data-dismiss="alert" aria-label="close">&times;</a>
+           <p>Items that are created will be shown here.</p>
+         </div>
+         <h2>Search</h2>
+         <p>Type something in the input field to search the table for such as invoices ID, customer names.</p>
+         <p><input class="form-control" type="text" placeholder="Search.."></p>
          <table class="datatable no-margin" width="100%" border="0" cellspacing="1" cellpadding="3">
             <tbody>
                <tr>
@@ -201,7 +230,7 @@
             </tbody>
          </table>
          <table class="datatable no-margin" width="100%" border="0" cellspacing="1" cellpadding="3">
-            <tbody class="list-group">
+            <tbody>
               {foreach from=$createditems key=ID item=i}
                <tr class="text-center">
                   <td style="width: 8%;">#{$i.id}</td>
@@ -227,17 +256,7 @@
             </tbody>
          </table>
       </div>
-
-
    </div>
 </div>
-<script>
-   $(document).ready(function(){
-       $(".nav-tabs a").click(function(){
-           $(this).tab('show');
-       });
-   });
-</script>
-
 
 <!--{$debug|var_dump}-->

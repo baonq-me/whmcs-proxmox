@@ -1,0 +1,9 @@
+#proxmox .tab-content .tab-pane
+{
+  margin-top: 10px;
+}
+
+.progress
+{
+  margin: auto;
+}
