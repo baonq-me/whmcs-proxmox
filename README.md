@@ -55,7 +55,7 @@ Official release at December 29, 05:00 PM
 ### Database
 - [MySQL Triggers](https://www.w3resource.com/mysql/mysql-triggers.php)
 - [Business Logic: To Store or not to Store that is the Question?](https://www.paragoncorporation.com/ArticleDetail.aspx?ArticleID=28)
-- []()
+- [MySQL Stored Function](http://www.mysqltutorial.org/mysql-stored-function/)
 - []()
 - []()
 
