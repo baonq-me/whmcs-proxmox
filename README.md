@@ -69,6 +69,7 @@ Official release at December 29, 05:00 PM
 - [MySQL Triggers](https://www.w3resource.com/mysql/mysql-triggers.php)
 - [Business Logic: To Store or not to Store that is the Question?](https://www.paragoncorporation.com/ArticleDetail.aspx?ArticleID=28)
 - [MySQL Stored Function](http://www.mysqltutorial.org/mysql-stored-function/)
+- [MySQL Loop in Stored Procedures](http://www.mysqltutorial.org/stored-procedures-loop.aspx)
 - []()
 - []()
 
