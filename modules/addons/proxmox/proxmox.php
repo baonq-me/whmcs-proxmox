@@ -171,13 +171,116 @@ function proxmox_config()
  * @return array Optional success/failure message
  */
 
+ $triggers = [
+   'updateInvoiceAndOrder' => "
+CREATE TRIGGER `updateInvoiceAndOrder` AFTER UPDATE ON `tblinvoices`
+FOR EACH ROW
+BEGIN
+IF NEW.`status` = 'Paid' THEN
+ UPDATE `tblinvoiceitems` SET `notes` = 'Managed by Proxmox addon' WHERE `tblinvoiceitems`.`invoiceid` = NEW.`id`;
+ UPDATE `tblinvoiceitems` SET `status` = 'Paid'                    WHERE `tblinvoiceitems`.`invoiceid` = NEW.`id`;
+ UPDATE `tblinvoiceitems` SET `updated_at` = NOW()                 WHERE `tblinvoiceitems`.`invoiceid` = NEW.`id`;
+ UPDATE `tblorders` SET `tblorders`.`status` = 'Active'            WHERE `tblorders`.`invoiceid` = NEW.`id`;
+END IF;
+END;",
+
+'activeHostingService' => "
+CREATE TRIGGER `activeHostingService` AFTER UPDATE ON `tblorders`
+FOR EACH ROW
+BEGIN
+IF NEW.`status` = 'Active' THEN
+ UPDATE `tblhosting` SET `tblhosting`.`domainstatus` = 'Active' WHERE `tblhosting`.`orderid` = NEW.`id`;
+END IF;
+END;",
+];
+
+ $procedures = [
+   'getItemsByStatus' => "
+CREATE DEFINER=`root`@`localhost` PROCEDURE `getItemsByStatus`(IN `status` TEXT, IN `amount` INT)
+READS SQL DATA
+SELECT `tblinvoiceitems`.`id`, `tblinvoiceitems`.`userid`, CONCAT(`tblclients`.`firstname`, ' ', `tblclients`.`lastname`) as username,  `tblinvoiceitems`.`invoiceid`, `tblinvoiceitems`.`type`, `tblinvoiceitems`.`description`, DATE_FORMAT(`tblinvoiceitems`.`updated_at`, '%b %d, %Y %k:%i:%s') as updated_at, `tblinvoiceitems`.`status`
+FROM `tblinvoiceitems`
+JOIN `tblclients` ON `tblclients`.`id` = `tblinvoiceitems`.`userid`
+WHERE `tblinvoiceitems`.`status` = status COLLATE utf8_unicode_ci
+AND `tblinvoiceitems`.`notes` = 'Managed by Proxmox addon' COLLATE utf8_unicode_ci
+ORDER BY `tblinvoiceitems`.`id`
+LIMIT amount",
+
+    'getItemStatus' => "
+CREATE DEFINER=`root`@`localhost` PROCEDURE `getItemStatus`(IN `itemid` INT)
+READS SQL DATA
+SELECT `tblinvoiceitems`.`id`, `tblinvoiceitems`.`status`
+FROM `tblinvoiceitems`
+WHERE `tblinvoiceitems`.`id` = itemid
+AND `tblinvoiceitems`.`notes` = 'Managed by Proxmox addon' COLLATE utf8_unicode_ci",
+
+    'updateItemStatus' => "
+CREATE DEFINER=`root`@`localhost` PROCEDURE `updateItemStatus`(IN `itemid` INT, IN `status` TEXT)
+MODIFIES SQL DATA
+UPDATE `tblinvoiceitems`
+SET `tblinvoiceitems`.`status` = status COLLATE utf8_unicode_ci
+WHERE `tblinvoiceitems`.`id` = itemid
+AND `tblinvoiceitems`.`notes` = 'Managed by Proxmox addon' COLLATE utf8_unicode_ci",
+
+    'updateCustomField' => "
+CREATE DEFINER=`root`@`localhost` PROCEDURE `updateCustomField`(IN `itemid` INT, IN `fieldname` TEXT, IN `value` TEXT)
+MODIFIES SQL DATA
+UPDATE `tblcustomfieldsvalues`
+SET `tblcustomfieldsvalues`.`value` = value COLLATE utf8_unicode_ci
+WHERE `tblcustomfieldsvalues`.`relid` = itemid
+AND `tblcustomfieldsvalues`.`fieldid` IN
+(
+    SELECT `tblcustomfields`.`id`
+    FROM `tblhosting`
+    JOIN `tblcustomfields`
+    ON `tblcustomfields`.`relid` = `tblhosting`.`packageid`
+    WHERE `tblhosting`.`id` = itemid
+    AND `tblcustomfields`.`fieldname` = fieldname COLLATE utf8_unicode_ci
+)",
+
+    'getCustomField' => "
+CREATE DEFINER=`root`@`localhost` PROCEDURE `getCustomField`(IN `itemid` INT, IN `fieldname` TEXT)
+READS SQL DATA
+SELECT `tblcustomfields`.`relid`, `tblcustomfields`.`fieldname`, `tblcustomfieldsvalues`.`value`
+FROM `tblcustomfieldsvalues`
+JOIN `tblcustomfields`
+ON `tblcustomfieldsvalues`.`fieldid` = `tblcustomfields`.`id`
+WHERE `tblcustomfieldsvalues`.`relid` = itemid
+AND `tblcustomfields`.`fieldname` = fieldname COLLATE utf8_unicode_ci"
+ ];
+
+ $functions = [
+   'order2invoice' => "
+CREATE DEFINER=`root`@`localhost` FUNCTION `order2invoice`(`orderid` INT) RETURNS int(11)
+ READS SQL DATA
+ DETERMINISTIC
+BEGIN
+DECLARE invoiceid INT;
+SET invoiceid = 0;
+SELECT `tblorders`.`invoiceid` INTO invoiceid FROM `tblorders` WHERE `tblorders`.`id` = orderid;
+RETURN invoiceid;
+END",
+
+ 'invoice2order' => "
+CREATE DEFINER=`root`@`localhost` FUNCTION `invoice2order`(`invoiceid` INT) RETURNS int(11)
+ READS SQL DATA
+BEGIN
+DECLARE orderid INT;
+SET orderid = 0;
+SELECT `tblorders`.`id` INTO orderid FROM `tblorders` WHERE `tblorders`.`invoiceid` = invoiceid;
+RETURN orderid;
+END"];
+
+$databaseObjects = ['trigger' => $triggers, 'procedure' => $procedures, 'function' => $functions];
+
+
 function proxmox_activate()
 {
     // Create custom tables and schema required by your module
     //$query = "CREATE TABLE `mod_proxmox` (`id` INT( 1 ) NOT NULL AUTO_INCREMENT PRIMARY KEY ,`demo` TEXT NOT NULL )";
     //full_query($query);
 
-    Capsule::schema()->dropIfExists('mod_proxmox_info');
+    /*Capsule::schema()->dropIfExists('mod_proxmox_info');
     Capsule::schema()->dropIfExists('mod_proxmox_resource');
     Capsule::schema()->dropIfExists('mod_proxmox_usage');
 
@@ -226,39 +329,29 @@ function proxmox_activate()
         //$table->primary('id');
         $table->foreign('id')->references('id')->on('mod_proxmox_info');
       }
-    );
+    );*/
+
+
 
     Capsule::schema()->table('tblinvoiceitems', function($table)
     {
-        $table->text('ipaddress');
         $table->timestamp('updated_at');
         $table->text('status');
     });
 
-    $trigger = "
-CREATE TRIGGER `update_invoiceitems` AFTER UPDATE ON `tblinvoices`
-FOR EACH ROW
-BEGIN
-IF NEW.`status` = 'Paid' THEN
-UPDATE `tblinvoiceitems` SET `notes` = 'Managed by Proxmox addon' WHERE `tblinvoiceitems`.`invoiceid` = NEW.`id`;
-UPDATE `tblinvoiceitems` SET `status` = 'Paid'                    WHERE `tblinvoiceitems`.`invoiceid` = NEW.`id`;
-UPDATE `tblinvoiceitems` SET `updated_at` = NOW()                 WHERE `tblinvoiceitems`.`invoiceid` = NEW.`id`;
-UPDATE `tblorders` SET `tblorders`.`status` = 'Active'            WHERE `tblorders`.`invoiceid` = NEW.`id`;
-END IF;
-END;
-";
-    Capsule::connection()->getPdo()->exec($trigger);
+
+    global $databaseObjects;
+
+    foreach ($databaseObjects as $type => $objects)
+    {
+      foreach ($objects as $name => $sql)
+      {
+          logActivity("[Proxmox] Installing $type '$name' into database");
+          Capsule::connection()->getPdo()->exec($sql);
+      }
+    }
 
 //UPDATE `tblinvoiceitems` SET `updated_on` = DATE_FORMAT(NOW(), '%b %d, %Y %k:%i:%s');
-
-    // Capsule::table('tbladdonmodules')
-    //         ->where('module', 'proxmox')
-    //         ->where('setting', 'access')
-    //         ->update(array('value' => '1,2,3'));
-
-    Capsule::table('tbladdonmodules')->insert(
-        array('module' => 'proxmox', 'setting' => 'access', 'value' => '1,2,3')
-    );
 
     return array(
         'status' => 'success', // Supported values here include: success, error or info
@@ -283,10 +376,26 @@ function proxmox_deactivate()
     //Capsule::schema()->dropIfExists('mod_proxmox_resource');
     //Capsule::schema()->dropIfExists('mod_proxmox_usage');
 
-    Capsule::connection()->getPdo()->exec('DROP TRIGGER IF EXISTS `update_invoiceitems`');
+    global $databaseObjects;
+
+    foreach ($databaseObjects as $type => $objects)
+    {
+      foreach ($objects as $name => $sql)
+      {
+          logActivity("[Proxmox] Removing $type '$name' from database");
+          Capsule::connection()->getPdo()->exec('DROP '.strtoupper($type).' IF EXISTS `'.$name.'`');
+      }
+    }
+
+    /*Capsule::connection()->getPdo()->exec('DROP FUNCTION IF EXISTS `invoice2order`');
+    Capsule::connection()->getPdo()->exec('DROP FUNCTION IF EXISTS `order2invoice`');
+    Capsule::connection()->getPdo()->exec('DROP PROCEDURE IF EXISTS `getItemsByStatus`');
+    Capsule::connection()->getPdo()->exec('DROP TRIGGER IF EXISTS `updateInvoiceAndOrder`');
+    Capsule::connection()->getPdo()->exec('DROP TRIGGER IF EXISTS `activeHostingService`');*/
+
     Capsule::schema()->table('tblinvoiceitems', function($table)
     {
-        $table->dropColumn(['ipaddress', 'updated_at', 'status']);
+        $table->dropColumn(['updated_at', 'status']);
     });
 
     Capsule::table('tblinvoiceitems')->where('notes', 'Managed by Proxmox addon')->update(array('notes' => ''));
@@ -359,8 +468,8 @@ function proxmox_output($vars)
  */
 function proxmox_sidebar($vars)
 {
-    $sidebar = '<p>Giờ hiện tại<br/>'.date("F j, Y, g:i a").'</p><p>Chưa biết điền cái gì vào sidebar</p>';
-    return $sidebar;
+    //$sidebar = '<p>Giờ hiện tại<br/>'.date("F j, Y, g:i a").'</p><p>Chưa biết điền cái gì vào sidebar</p>';
+    //return $sidebar;
 }
 
 /**
