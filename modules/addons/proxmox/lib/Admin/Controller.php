@@ -36,7 +36,8 @@ class Controller {
         $proxmox->buildConfig();
 
 
-        $status = implode(" ", $proxmox->getSystemStatus());
+        #$status = implode(" ", $proxmox->getSystemStatus());
+        $status = 'Could not connect to server';
         $pveConnection = intval(strpos($status, 'Could not connect to server'));
 
         if ($pveConnection > 0)
@@ -145,10 +146,11 @@ class Controller {
 EOF;
     }
 
-    public function test($vars)
+    public function debug($vars)
     {
       $smarty = $vars['smarty'];
-      $smarty->display(dirname(__FILE__) . '/../../templates/admin/test.tpl');
+      $smarty->assign('debug', WHMCS_Data::getItemsByStatus('Paid', 1));
+      $smarty->display(dirname(__FILE__) . '/../../templates/admin/debug.tpl');
     }
 
     public function create($vars)
@@ -156,12 +158,20 @@ EOF;
       $id = intval($_GET['id']);
       $ipaddress = $_GET['ipaddress'];
 
-      if (!$this->whmcs->checkItem($id, 'Paid'))
+      if ($this->whmcs->updateCustomField($id, 'IP address', $ipaddress) == 0)
       {
-        //echo json_encode(['status' => 'fail', 'reason' => 'Invalid invoice item']);
-        http_response_code(404);
+        $itemIP = $this->whmcs->getCustomField($id, 'IP address');
+        if ($itemIP === false)
+        {
+          echo json_encode(['status' => 'fail', 'reason' => "Invoice item #$id not exist"]);
+          http_response_code(404);
+          return;
+        } elseif ($itemIP['value'] == $ipaddress) {
+          echo json_encode(['status' => 'success']);
+        }
       } else {
-        $this->whmcs->moveItemToQueue($id, $ipaddress);
+        $this->whmcs->updateItemStatus($id, 'Queued');
+
         echo json_encode(['status' => 'success']);
       }
 
