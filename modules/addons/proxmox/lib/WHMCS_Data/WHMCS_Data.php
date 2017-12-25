@@ -9,34 +9,79 @@ class WHMCS_Data
   public function __construct() {
   }
 
-  public function checkItem($item, $status)
+  public function getCustomField($itemid, $fieldname)
   {
-    $search = Capsule::table('tblinvoiceitems')
-            ->where('id', $item)
-            ->where('status', $status)
-            ->where('notes', 'Managed by Proxmox addon')
-            ->select('id')
-            ->get();
+    $PDO = Capsule::connection()->getPdo();
 
-    if (count($search) != 1)
-    {
-      logActivity("WHMCS_Data->checkItem(): Invalid invoice item #$item with status $status");
-      return false;
-    }
-    else return true;
+    $sql = $PDO->prepare("CALL `getCustomField` (:itemid, :fieldname)");
+
+    $sql->bindParam(':itemid', $itemid);
+    $sql->bindParam(':fieldname', $fieldname);
+    $sql->execute();
+
+    return $sql->fetch($PDO::FETCH_ASSOC);
   }
 
-  public function moveItemToQueue($item, $ipaddress)
+  public function updateCustomField($itemid, $fieldname, $value)
   {
-    $result = Capsule::table('tblinvoiceitems')
-            ->where('id', $item)
-            ->where('status', 'Paid')
-            ->where('notes', 'Managed by Proxmox addon')
-            ->update(['status' => 'Queued', 'ipaddress' => $ipaddress]);
-    logActivity("WHMCS_Data->moveItemToQueue(): Invoice item #$item ($ipaddress) is moved to queue");
+    $sql = Capsule::connection()->getPdo()->prepare("CALL `updateCustomField` (:itemid, :fieldname, :value)");
+
+    $sql->bindParam(':itemid', $itemid);
+    $sql->bindParam(':fieldname', $fieldname);
+    $sql->bindParam(':value', $value);
+
+    $sql->execute();
+
+    if ($sql->rowCount() > 0)
+      logActivity("[Proxmox] WHMCS_Data->updateCustomField(): '$fieldname' of item #$itemid is changed to '$value'");
+
+    return $sql->rowCount();
   }
 
-  public function createItem()
+  public function getItemStatus($itemid)
+  {
+    $PDO = Capsule::connection()->getPdo();
+
+    $sql = $PDO->prepare("CALL `getItemStatus` (:itemid)");
+
+    $sql->bindParam(':itemid', $itemid);
+    $sql->execute();
+
+    return $sql->fetch($PDO::FETCH_ASSOC);
+  }
+
+
+  public function updateItemStatus($itemid, $status)
+  {
+    $sql = Capsule::connection()->getPdo()->prepare("CALL `updateItemStatus` (:itemid, :status)");
+
+    $sql->bindParam(':itemid', $itemid);
+    $sql->bindParam(':status', $status);
+
+    $sql->execute();
+
+    if ($sql->rowCount() > 0)
+      logActivity("[Proxmox] WHMCS_Data->updateItemStatus(): Status of item #$item is changed to '$status'");
+
+    return $sql->rowCount();
+
+  }
+
+  public function getItemsByStatus($status, $amount)
+  {
+    $PDO = Capsule::connection()->getPdo();
+
+    $sql = $PDO->prepare("CALL `getItemsByStatus` (:status, :amount)");
+
+    $sql->bindParam(':status', $status);
+    $sql->bindParam(':amount', $amount);
+    $sql->execute();
+
+    return $sql->fetch($PDO::FETCH_ASSOC);
+  }
+
+
+  public function createOneInvoiceItem()
   {
     $item = Capsule::table('tblinvoiceitems')
             ->where('status', 'Queued')
@@ -47,11 +92,23 @@ class WHMCS_Data
             ->where('id', $item->id)
             ->update(array('status' => 'Creating'));
 
-    sleep(20);
+    {
+      sleep(20);
+      $status = true;
+    }
 
-    Capsule::table('tblinvoiceitems')
-            ->where('id', $item->id)
-            ->update(array('status' => 'Created'));
+    if ($status)
+    {
+      logActivity("[Proxmox] Invoice item #{$item->id} is created");
+      Capsule::table('tblinvoiceitems')
+              ->where('id', $item->id)
+              ->update(array('status' => 'Created'));
+    } else {
+      logActivity("[Proxmox] Fail to create invoice item #{$item->id}.");
+      Capsule::table('tblinvoiceitems')
+              ->where('id', $item->id)
+              ->update(array('status' => 'Fail'));    }
+
   }
 }
 
